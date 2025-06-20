@@ -1,3 +1,5 @@
 .env
 venv/
 __pycache__
+Database/__pycache__
+Telegram_Bot/__pycache__
