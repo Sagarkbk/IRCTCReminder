@@ -84,23 +84,3 @@ async def main():
 
 if __name__=="__main__":
     asyncio.run(main())
-
-# async def test_timezone():
-#     from Database.connection import db
-    
-#     await db.connect()
-    
-#     async with db.pool.acquire() as conn:
-#         # Check current timezone
-#         timezone = await conn.fetchval("SHOW timezone")
-#         print(f"Current timezone: {timezone}")
-        
-#         # Check current time with timezone
-#         current_time = await conn.fetchval("SELECT NOW()")
-#         print(f"Current time: {current_time}")
-    
-#     await db.disconnect()
-
-# if __name__ == "__main__":
-#     import asyncio
-#     asyncio.run(test_timezone())
