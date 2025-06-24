@@ -19,7 +19,7 @@ class Database:
             max_size=10
         )
         print("Database connection pool created.")
-    
+
     async def disconnect(self):
         if self.pool:
             await self.pool.close()

@@ -3,9 +3,9 @@ CREATE TABLE selected_holidays (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     holiday_name VARCHAR(255) NOT NULL,
     holiday_date DATE NOT NULL,
-    category VARCHAR(100), -- from the API response
-    day_before_sent BOOLEAN DEFAULT FALSE, -- 61 days before holiday
-    release_day_sent BOOLEAN DEFAULT FALSE, -- 60 days before holiday
+    category VARCHAR(100),
+    day_before_sent BOOLEAN DEFAULT FALSE,
+    release_day_sent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
 );
 
