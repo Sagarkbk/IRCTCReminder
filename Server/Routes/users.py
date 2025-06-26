@@ -12,6 +12,36 @@ class User(BaseModel):
 
 usersRouter = APIRouter(prefix="/users")
 
+@usersRouter.get("/getUser/{google_id}")
+async def getUser(google_id: str):
+    try:
+        await db.connect()
+        get_user_query = """
+                SELECT * FROM users WHERE google_id = $1
+                """
+        existingUser = await db.fetchone(get_user_query, google_id)
+        if not existingUser:
+            return "User does not exist"
+        return {"User Details" : existingUser}
+    except Exception as e:
+        print(f"Exception when hitting /getUser: {e}")
+        raise
+
+@usersRouter.get("/getAllUsers")
+async def getAllUsers():
+    try:
+        await db.connect()
+        get_user_query = """
+                SELECT * FROM users
+                """
+        users = await db.fetchall(get_user_query)
+        if not users:
+            return "No users as of now"
+        return {"Users" : users}
+    except Exception as e:
+        print(f"Exception when hitting /getAllUsers: {e}")
+        raise
+
 @usersRouter.post("/addUser")
 async def addUser(body: User):
     try:
