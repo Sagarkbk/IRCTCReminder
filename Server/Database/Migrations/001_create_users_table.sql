@@ -1,7 +1,7 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     google_id VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(255) NOT NULL,
     telegram_id BIGINT UNIQUE,
     telegram_username VARCHAR(255),
