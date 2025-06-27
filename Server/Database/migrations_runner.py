@@ -22,7 +22,7 @@ class Migrations:
 
         except Exception as e:
             print(f"Exception: {e}")
-            return None
+            raise
     
     async def run_pending_migrations(self):
         try:
@@ -49,7 +49,7 @@ class Migrations:
         
         except Exception as e:
             print(f"Exception: {e}")
-            return None
+            raise
     
     async def run_migration(self, file_name):
         try:
@@ -66,7 +66,7 @@ class Migrations:
         
         except Exception as e:
             print(f"Exception: {e}")
-            return None
+            raise
 
 async def main():
     try:
@@ -80,7 +80,7 @@ async def main():
 
     except Exception as e:
             print(f"Exception: {e}")
-            return None
+            raise
 
 if __name__=="__main__":
     asyncio.run(main())

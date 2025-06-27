@@ -1,14 +1,28 @@
 from fastapi import APIRouter, Body
 from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime, timedelta
+import pytz
 from Database.connection import db
 
 class User(BaseModel):
     google_id: str;
     email: str;
     username: str;
-    reminder_days: int;
-    calendar_enabled: bool;
-    telegram_enabled: bool;
+    reminder_days: Optional[int] = 1;
+    calendar_enabled: Optional[bool] = False;
+
+class Telegram(BaseModel):
+    telegram_id: int;
+    telegram_username: str;
+    telegram_linked_at: str;
+    telegram_enabled: Optional[bool] = False;
+    preferences_updated_at: datetime
+
+class Link(BaseModel):
+    user_id: int;
+    token: str;
+    is_used: Optional[bool] = False;
 
 usersRouter = APIRouter(prefix="/users")
 
@@ -31,10 +45,10 @@ async def getUser(google_id: str):
 async def getAllUsers():
     try:
         await db.connect()
-        get_user_query = """
+        get_users_query = """
                 SELECT * FROM users
                 """
-        users = await db.fetchall(get_user_query)
+        users = await db.fetchall(get_users_query)
         if not users:
             return "No users as of now"
         return {"Users" : users}
@@ -46,14 +60,58 @@ async def getAllUsers():
 async def addUser(body: User):
     try:
         await db.connect()
-        insert_user_query = """
-                INSERT INTO users (google_id, email, username, reminder_days, calendar_enabled, telegram_enabled) VALUES ($1, $2, $3, $4, $5, $6)
+        get_user_with_googleid_query = """
+                SELECT * FROM users WHERE google_id = $1
                 """
-        await db.execute(insert_user_query, body.google_id, body.email, body.username, body.reminder_days, body.calendar_enabled, body.telegram_enabled)
+        existingUserWithId = await db.fetchone(get_user_with_googleid_query, body.google_id)
+        if existingUserWithId:
+            return "User already exists with provided Google ID"
+        get_user_with_email_query = """
+                SELECT * FROM users WHERE email = $1
+                """
+        existingUserWithEmail = await db.fetchone(get_user_with_email_query, body.email)
+        if existingUserWithEmail:
+            return "User already exists with provided Email"
+        insert_user_query = """
+                INSERT INTO users (google_id, email, username, reminder_days, calendar_enabled) VALUES ($1, $2, $3, $4, $5)
+                """
+        await db.execute(insert_user_query, body.google_id, body.email, body.username, body.reminder_days, body.calendar_enabled)
         get_user_query = """
                 SELECT * FROM users WHERE google_id = $1
                 """
         newUser = await db.fetchone(get_user_query, body.google_id)
         return {"newUser" : newUser}
     except Exception as e:
-        return f"Exception: {e}"
+        print(f"Exception when hitting /addUser: {e}")
+        raise
+
+@usersRouter.post("/generateToken/{google_id}")
+async def generateToken(google_id):
+    try:
+        ist = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(ist)
+        expires_at = current_time + timedelta(minutes=30)
+        await db.connect()
+        get_user_with_googleid_query = """
+                SELECT * FROM users WHERE google_id = $1
+                """
+        existingUserWithId = await db.fetchone(get_user_with_googleid_query, google_id)
+        if not existingUserWithId:
+            return "There is no user with provided Google ID"
+        check_if_token_exists_query = """
+                SELECT * FROM google_telegram_link WHERE user_id = $1
+                """
+        unusedToken = await db.fetchone(check_if_token_exists_query, existingUserWithId['id'])
+        if unusedToken and not unusedToken['is_used'] and (unusedToken['expires_at'] < expires_at):
+            return {"Token" : unusedToken.token}
+        # For now creating token by combining gid and user id
+        token = f"{google_id}#{existingUserWithId['id']}"
+        insert_token_query = """
+                INSERT INTO google_telegram_link (user_id, token, expires_at) VALUES ($1, $2, $3)
+                """
+        await db.execute(insert_token_query, existingUserWithId['id'], token, expires_at)
+        return {"Token" : token}
+
+    except Exception as e:
+        print(f"Exception when hitting /linkTelegram: {e}")
+        raise
