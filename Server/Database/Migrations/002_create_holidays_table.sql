@@ -6,7 +6,7 @@ CREATE TABLE selected_holidays (
     category VARCHAR(100),
     day_before_sent BOOLEAN DEFAULT FALSE,
     release_day_sent BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_selected_holidays_user_id ON selected_holidays(user_id);

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Body
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
-import pytz
 from Database.connection import db
+import pytz
 
 class User(BaseModel):
     google_id: str;
@@ -19,10 +19,11 @@ class Telegram(BaseModel):
     telegram_enabled: Optional[bool] = False;
     preferences_updated_at: datetime
 
-class Link(BaseModel):
-    user_id: int;
-    token: str;
-    is_used: Optional[bool] = False;
+class LinkAccounts(BaseModel):
+    telegram_id: int;
+    telegram_username: str;
+    telegram_linked_at: datetime;
+    preferences_updated_at: datetime;
 
 usersRouter = APIRouter(prefix="/users")
 
@@ -88,9 +89,6 @@ async def addUser(body: User):
 @usersRouter.post("/generateToken/{google_id}")
 async def generateToken(google_id):
     try:
-        ist = pytz.timezone('Asia/Kolkata')
-        current_time = datetime.now(ist)
-        expires_at = current_time + timedelta(minutes=30)
         await db.connect()
         get_user_with_googleid_query = """
                 SELECT * FROM users WHERE google_id = $1
@@ -102,8 +100,15 @@ async def generateToken(google_id):
                 SELECT * FROM google_telegram_link WHERE user_id = $1
                 """
         unusedToken = await db.fetchone(check_if_token_exists_query, existingUserWithId['id'])
-        if unusedToken and not unusedToken['is_used'] and (unusedToken['expires_at'] < expires_at):
-            return {"Token" : unusedToken.token}
+        current_time = datetime.now(pytz.UTC)
+        expires_at = current_time + timedelta(minutes=30)
+        if unusedToken and (not unusedToken['is_used']) and (unusedToken['expires_at'] > current_time):
+            return {"Unused/Non-Expired Token" : unusedToken['token']}
+        if unusedToken and (unusedToken['is_used'] or (unusedToken['expires_at'] < current_time)):
+            delete_expired_or_used_token_query = """
+                DELETE FROM google_telegram_link WHERE user_id = $1
+                """
+            await db.execute(delete_expired_or_used_token_query, existingUserWithId['id'])
         # For now creating token by combining gid and user id
         token = f"{google_id}#{existingUserWithId['id']}"
         insert_token_query = """
@@ -115,3 +120,7 @@ async def generateToken(google_id):
     except Exception as e:
         print(f"Exception when hitting /linkTelegram: {e}")
         raise
+
+@usersRouter.post("/linkAccounts")
+async def linkAccounts(body):
+    pass

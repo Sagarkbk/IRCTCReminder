@@ -6,12 +6,12 @@ CREATE TABLE users (
     telegram_id BIGINT UNIQUE,
     telegram_username VARCHAR(255),
     telegram_linked_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata'),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE,
     reminder_days INTEGER DEFAULT 1 CHECK (reminder_days IN (1, 2)),
     calendar_enabled BOOLEAN DEFAULT FALSE,
     telegram_enabled BOOLEAN DEFAULT FALSE,
-    preferences_updated_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
+    preferences_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX idx_users_google_id ON users(google_id);
