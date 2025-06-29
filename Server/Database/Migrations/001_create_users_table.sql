@@ -11,7 +11,7 @@ CREATE TABLE users (
     reminder_days INTEGER DEFAULT 1 CHECK (reminder_days IN (1, 2)),
     calendar_enabled BOOLEAN DEFAULT FALSE,
     telegram_enabled BOOLEAN DEFAULT FALSE,
-    preferences_updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    preferences_updated_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_users_google_id ON users(google_id);

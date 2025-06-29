@@ -20,10 +20,9 @@ class Telegram(BaseModel):
     preferences_updated_at: datetime
 
 class LinkAccounts(BaseModel):
+    token: str;
     telegram_id: int;
     telegram_username: str;
-    telegram_linked_at: datetime;
-    preferences_updated_at: datetime;
 
 usersRouter = APIRouter(prefix="/users")
 
@@ -127,9 +126,34 @@ async def generateToken(google_id, response: Response):
         return {"Token" : token}
 
     except Exception as e:
-        print(f"Exception when hitting /linkTelegram: {e}")
+        print(f"Exception when hitting /generateToken: {e}")
         raise
 
 @usersRouter.post("/linkAccounts")
 async def linkAccounts(body: LinkAccounts, response: Response):
-    pass
+    try:
+        if not body.token:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return "Please come to telegram through the link from website so that we can link your google and telegram accounts"
+        await db.connect()
+        get_token_details_query = """
+                SELECT * from google_telegram_link WHERE
+                token = $1
+                """
+        token_details = await db.fetchone(get_token_details_query, body.token)
+        if token_details['is_used']:
+            return "Your google and telegram accounts have already been linked. Linking is no longer required"
+        current_time = datetime.now(pytz.UTC)
+        if token_details['expires_at'] > current_time:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return "Your session token has expired. Please come to telegram through the link from website so that we can link your google and telegram accounts"
+        link_accounts_query = """
+                UPDATE TABLE users SET telegram_id = $1 AND telegram_username = $2 AND
+                telegram_linked_at = $3 AND preferences_updated_at = $4 WHERE id = $5
+                """
+        await db.execute(link_accounts_query, body.telegram_id, body.telegram_username, current_time, current_time, token_details['user_id'])
+        response.status_code = status.HTTP_201_CREATED
+        return "Added telegram details"
+    except Exception as e:
+        print(f"Exception when hitting /linkAccounts: {e}")
+        raise
