@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from Database.connection import db
 import pytz
 
@@ -106,7 +106,7 @@ async def generateToken(google_id, response: Response):
                 SELECT * FROM google_telegram_link WHERE user_id = $1
                 """
         unusedToken = await db.fetchone(check_if_token_exists_query, existingUserWithId['id'])
-        current_time = datetime.now(pytz.UTC)
+        current_time = datetime.now(timezone.utc)
         expires_at = current_time + timedelta(minutes=30)
         if unusedToken and (not unusedToken['is_used']) and (unusedToken['expires_at'] > current_time):
             response.status_code = status.HTTP_200_OK
@@ -143,15 +143,20 @@ async def linkAccounts(body: LinkAccounts, response: Response):
         token_details = await db.fetchone(get_token_details_query, body.token)
         if token_details['is_used']:
             return "Your google and telegram accounts have already been linked. Linking is no longer required"
-        current_time = datetime.now(pytz.UTC)
-        if token_details['expires_at'] > current_time:
+        current_time = datetime.now(timezone.utc)
+        if token_details['expires_at'] < current_time:
             response.status_code = status.HTTP_401_UNAUTHORIZED
             return "Your session token has expired. Please come to telegram through the link from website so that we can link your google and telegram accounts"
         link_accounts_query = """
-                UPDATE TABLE users SET telegram_id = $1 AND telegram_username = $2 AND
-                telegram_linked_at = $3 AND preferences_updated_at = $4 WHERE id = $5
+                UPDATE users SET telegram_id = $1, telegram_username = $2,
+                telegram_linked_at = $3, preferences_updated_at = $4 WHERE id = $5
                 """
         await db.execute(link_accounts_query, body.telegram_id, body.telegram_username, current_time, current_time, token_details['user_id'])
+        delete_session_query = """
+                UPDATE google_telegram_link SET is_used = $1 WHERE
+                token = $2
+                """
+        await db.execute(delete_session_query, True, body.token)
         response.status_code = status.HTTP_201_CREATED
         return "Added telegram details"
     except Exception as e:
