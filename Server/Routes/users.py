@@ -24,6 +24,14 @@ class LinkAccounts(BaseModel):
     telegram_id: int;
     telegram_username: str;
 
+class Holidays(BaseModel):
+    user_id: str;
+    holiday_name: str;
+    holiday_date: datetime;
+    category: str;
+    day_before_sent: Optional[bool] = False;
+    release_day_sent: Optional[bool] = False;
+
 usersRouter = APIRouter(prefix="/users")
 
 @usersRouter.get("/getUser/{google_id}")
@@ -137,8 +145,7 @@ async def linkAccounts(body: LinkAccounts, response: Response):
             return "Please come to telegram through the link from website so that we can link your google and telegram accounts"
         await db.connect()
         get_token_details_query = """
-                SELECT * from google_telegram_link WHERE
-                token = $1
+                SELECT * from google_telegram_link WHERE token = $1
                 """
         token_details = await db.fetchone(get_token_details_query, body.token)
         if token_details['is_used']:
@@ -159,6 +166,30 @@ async def linkAccounts(body: LinkAccounts, response: Response):
         await db.execute(delete_session_query, True, body.token)
         response.status_code = status.HTTP_201_CREATED
         return "Added telegram details"
+    except Exception as e:
+        print(f"Exception when hitting /linkAccounts: {e}")
+        raise
+
+
+@usersRouter.post("/addHolidays")
+async def addHolidays(body: Holidays, response:Response):
+    try:
+        await db.connect()
+        existing_user_query = """
+                SELECT * from users WHERE id = $1
+                """
+        existing_user = await db.fetchone(existing_user_query, body.user_id)
+        if not existing_user:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return "No user exists with provided user id"
+        add_holidays_query = """
+                INSERT INTO selected_holidays (user_id, holiday_name, holiday_date, category, 
+                day_before_sent, release_day_sent, updated_holiday_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                """
+        updated_at = datetime.now(timezone.utc)
+        await db.execute(add_holidays_query, body.user_id, body.holiday_name, body.holiday_date, body.category, body.day_before_sent, body.release_day_sent, updated_at)
+        response.status_code = status.HTTP_201_CREATED
+        return "Holiday added into your list"
     except Exception as e:
         print(f"Exception when hitting /linkAccounts: {e}")
         raise
