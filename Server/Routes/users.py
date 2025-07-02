@@ -17,7 +17,7 @@ class Telegram(BaseModel):
     telegram_username: str;
     telegram_linked_at: str;
     telegram_enabled: Optional[bool] = False;
-    preferences_updated_at: datetime
+    last_updated_at: datetime
 
 class LinkAccounts(BaseModel):
     token: str;
@@ -25,12 +25,12 @@ class LinkAccounts(BaseModel):
     telegram_username: str;
 
 class Holidays(BaseModel):
-    user_id: str;
-    holiday_name: str;
-    holiday_date: datetime;
-    category: str;
-    day_before_sent: Optional[bool] = False;
-    release_day_sent: Optional[bool] = False;
+    user_id: int;
+    holiday_name: list[str];
+    holiday_date: list[datetime];
+    category: list[str];
+    day_before_sent: list[Optional[bool]] = False;
+    release_day_sent: list[Optional[bool]] = True;
 
 usersRouter = APIRouter(prefix="/users")
 
@@ -156,7 +156,7 @@ async def linkAccounts(body: LinkAccounts, response: Response):
             return "Your session token has expired. Please come to telegram through the link from website so that we can link your google and telegram accounts"
         link_accounts_query = """
                 UPDATE users SET telegram_id = $1, telegram_username = $2,
-                telegram_linked_at = $3, preferences_updated_at = $4 WHERE id = $5
+                telegram_linked_at = $3, last_updated_at = $4 WHERE id = $5
                 """
         await db.execute(link_accounts_query, body.telegram_id, body.telegram_username, current_time, current_time, token_details['user_id'])
         delete_session_query = """
@@ -175,21 +175,34 @@ async def linkAccounts(body: LinkAccounts, response: Response):
 async def addHolidays(body: Holidays, response:Response):
     try:
         await db.connect()
+        if not (len(body.holiday_name) == len(body.holiday_date) == len(body.category)):
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return "Number of names, dates, categories are not matching"
+        
         existing_user_query = """
-                SELECT * from users WHERE id = $1
-                """
+                    SELECT * from users WHERE id = $1
+                    """
         existing_user = await db.fetchone(existing_user_query, body.user_id)
         if not existing_user:
             response.status_code = status.HTTP_400_BAD_REQUEST
             return "No user exists with provided user id"
         add_holidays_query = """
                 INSERT INTO selected_holidays (user_id, holiday_name, holiday_date, category, 
-                day_before_sent, release_day_sent, updated_holiday_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                day_before_sent, release_day_sent, last_updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
                 """
         updated_at = datetime.now(timezone.utc)
-        await db.execute(add_holidays_query, body.user_id, body.holiday_name, body.holiday_date, body.category, body.day_before_sent, body.release_day_sent, updated_at)
+        for holiday_name, holiday_date, category in zip(body.holiday_name, body.holiday_date, body.category):
+            await db.execute(add_holidays_query, body.user_id, holiday_name, holiday_date, category, body.day_before_sent, body.release_day_sent, updated_at)
         response.status_code = status.HTTP_201_CREATED
         return "Holiday added into your list"
     except Exception as e:
-        print(f"Exception when hitting /linkAccounts: {e}")
+        print(f"Exception when hitting /addHolidays: {e}")
         raise
+
+# Sample working body for /addHolidays
+# {
+#     "user_id": 1,
+#     "holiday_name": ["Sankranthi", "Deepavali"],
+#     "holiday_date": ["2026-01-14", "2025-10-20"],
+#     "category": ["AP Regional", "National"]
+# }

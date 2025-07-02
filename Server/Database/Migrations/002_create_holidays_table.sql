@@ -1,13 +1,13 @@
 CREATE TABLE selected_holidays (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     holiday_name VARCHAR(255) NOT NULL,
     holiday_date DATE NOT NULL,
     category VARCHAR(100),
     day_before_sent BOOLEAN DEFAULT FALSE,
-    release_day_sent BOOLEAN DEFAULT FALSE,
+    release_day_sent BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_holiday_at TIMESTAMP WITH TIME ZONE
+    last_updated_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_selected_holidays_user_id ON selected_holidays(user_id);
