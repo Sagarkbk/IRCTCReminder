@@ -1,52 +1,19 @@
-from fastapi import APIRouter, Response, status
-from pydantic import BaseModel
-from typing import Optional
+from fastapi import APIRouter, Response, status, Depends
 from datetime import datetime, timedelta, timezone
 from Database.connection import db
-import pytz
-
-class User(BaseModel):
-    google_id: str;
-    email: str;
-    username: str;
-    reminder_days: Optional[int] = 1;
-    calendar_enabled: Optional[bool] = False;
-
-class Telegram(BaseModel):
-    telegram_id: int;
-    telegram_username: str;
-    telegram_linked_at: str;
-    telegram_enabled: Optional[bool] = False;
-    last_updated_at: datetime
-
-class LinkAccounts(BaseModel):
-    token: str;
-    telegram_id: int;
-    telegram_username: str;
-
-class Holidays(BaseModel):
-    user_id: int;
-    holiday_name: list[str];
-    holiday_date: list[datetime];
-    category: list[str];
-    day_before_sent: list[Optional[bool]] = False;
-    release_day_sent: list[Optional[bool]] = True;
+from Routes.models import User, LinkAccounts, Holidays
+from Middlewares.middlewares import user_auth_middleware
 
 usersRouter = APIRouter(prefix="/users")
 
 @usersRouter.get("/getUser/{google_id}")
-async def getUser(google_id: str, response: Response):
+async def getUser(response: Response, user = Depends(user_auth_middleware)):
     try:
-        await db.connect()
-        get_user_query = """
-                SELECT * FROM users WHERE google_id = $1
-                """
-        existingUser = await db.fetchone(get_user_query, google_id)
-        if not existingUser:
+        if not user:
             response.status_code = status.HTTP_404_NOT_FOUND
-            return "User does not exist"
+            return "User not found"
         response.status_code = status.HTTP_200_OK
-        return {"User Details" : existingUser}
+        return {"User Details" : user}
     except Exception as e:
         print(f"Exception when hitting /getUser: {e}")
         raise
