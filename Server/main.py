@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from Routes.users import usersRouter
 from Routes.telegram import telegramRouter
+
 app = FastAPI()
 
 @app.get("/")

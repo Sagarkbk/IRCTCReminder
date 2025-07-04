@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, Response, status, Request, Depends
 from datetime import datetime, timedelta, timezone
 from Database.connection import db
-from Routes.models import User, LinkAccounts, Holidays
-from Middlewares.middlewares import user_auth_middleware
+from Models.models import User, LinkAccounts, Holidays
+from Middlewares.middlewares import user_verification
 
-usersRouter = APIRouter(prefix="/users")
+usersRouter = APIRouter(
+    prefix="/users",
+    dependencies=[Depends(user_verification)]
+    )
 
 @usersRouter.get("/getUser/{google_id}")
-async def getUser(response: Response, user = Depends(user_auth_middleware)):
+async def getUser(request: Request, response: Response):
     try:
-        if not user:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return "User not found"
+        user = request.state.user
         response.status_code = status.HTTP_200_OK
         return {"User Details" : user}
     except Exception as e:
@@ -34,7 +35,7 @@ async def getAllUsers(response: Response):
         print(f"Exception when hitting /getAllUsers: {e}")
         raise
 
-@usersRouter.post("/addUser")
+@usersRouter.post("/addUser", dependencies=[]) #I dont need user verification for this endpoint, so made dependencies as empty. This is my comment not AI generated.    
 async def addUser(body: User, response: Response):
     try:
         await db.connect()
