@@ -136,11 +136,11 @@ async def linkAccounts(body: LinkAccounts, response: Response, request: Request)
 async def addHolidays(body: Holidays, response:Response, request: Request):
     try:
         user = request.state.user
-        await db.connect()
         if not (len(body.holiday_name) == len(body.holiday_date) == len(body.category)):
             response.status_code = status.HTTP_400_BAD_REQUEST
             return "Number of names, dates, categories are not matching"
         
+        await db.connect()
         add_holidays_query = """
                 INSERT INTO selected_holidays (user_id, holiday_name, holiday_date, category, 
                 day_before_sent, release_day_sent, last_updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -149,7 +149,7 @@ async def addHolidays(body: Holidays, response:Response, request: Request):
         for holiday_name, holiday_date, category in zip(body.holiday_name, body.holiday_date, body.category):
             await db.execute(add_holidays_query, user['id'], holiday_name, holiday_date, category, body.day_before_sent, body.release_day_sent, updated_at)
         response.status_code = status.HTTP_201_CREATED
-        return "Holiday added into your list"
+        return "Holidays added into your list"
     except Exception as e:
         print(f"Exception when hitting /addHolidays: {e}")
         raise
@@ -161,3 +161,34 @@ async def addHolidays(body: Holidays, response:Response, request: Request):
 #     "holiday_date": ["2026-01-14", "2025-10-20"],
 #     "category": ["AP Regional", "National"]
 # }
+
+@usersRouter.put("/updateHolidays")
+async def updateHolidays(body: Holidays, response:Response, request: Request):
+    try:
+        user = request.state.user
+        if not (len(body.holiday_name) == len(body.holiday_date) == len(body.category)):
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return "Number of names, dates, categories are not matching"
+        
+        num_holidays = len(body.holiday_date)
+        day_before_sent = body.day_before_sent or [False] * num_holidays
+        release_day_sent = body.release_day_sent or [True] * num_holidays
+
+        # Need to put this inside transaction.
+        await db.connect()
+        delete_existing_holidays = """
+            DELETE FROM selected_holidays WHERE user_id = $1
+            """
+        await db.execute(delete_existing_holidays, user['id'])
+        add_holiday_query = """
+                INSERT INTO selected_holidays (user_id, holiday_name, holiday_date, category, 
+                day_before_sent, release_day_sent, last_updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                """
+        updated_at = datetime.now(timezone.utc)
+        for ind in range(len(body.holiday_date)):
+            await db.execute(add_holiday_query, user['id'], body.holiday_name[ind], body.holiday_date[ind], body.category[ind], day_before_sent[ind], release_day_sent[ind], updated_at)
+        response.status_code = status.HTTP_200_OK
+        return "Holidays updated"
+    except Exception as e:
+        print(f"Exception when hitting /addHolidays: {e}")
+        raise

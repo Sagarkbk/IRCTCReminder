@@ -19,5 +19,5 @@ class Holidays(BaseModel):
     holiday_name: list[str];
     holiday_date: list[datetime];
     category: list[str];
-    day_before_sent: list[Optional[bool]] = False;
-    release_day_sent: list[Optional[bool]] = True;
+    day_before_sent: list[Optional[bool]] = None;
+    release_day_sent: list[Optional[bool]] = None;
