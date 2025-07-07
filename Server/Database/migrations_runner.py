@@ -1,10 +1,9 @@
-from Database.connection import db
+from .connection import get_db_connection, close_pool
 import asyncio
 from pathlib import Path
 
 class Migrations:
-    def __init__(self, db_pool):
-        self.pool = db_pool
+    def __init__(self):
         self.migrations_dir = Path("Database/Migrations")
     
     async def create_migrations_tracking_table(self):
@@ -16,12 +15,12 @@ class Migrations:
                     applied_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
                     )
                     """
-            async with self.pool.acquire() as conn:
+            async with get_db_connection() as conn:
                 await conn.execute(query)
                 print("Migrations tracking table created")
 
         except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Exception in create_migrations_tracking_table: {e}")
             raise
     
     async def run_pending_migrations(self):
@@ -30,7 +29,7 @@ class Migrations:
 
             applied_migrations_query = "SELECT file_name from migrations_tracking"
 
-            async with self.pool.acquire() as conn:
+            async with get_db_connection() as conn:
                 applied_rows = await conn.fetch(applied_migrations_query)
                 applied_migrations = [row['file_name'] for row in applied_rows]
 
@@ -48,14 +47,14 @@ class Migrations:
                 await self.run_migration(file_name)
         
         except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Exception in run_pending_migrations: {e}")
             raise
     
     async def run_migration(self, file_name):
         try:
             with open(file_name, 'r') as file:
                 sql_content = file.read()
-            async with self.pool.acquire() as conn:
+            async with get_db_connection() as conn:
                 async with conn.transaction():
                     await conn.execute(sql_content)
                     await conn.execute(
@@ -65,22 +64,20 @@ class Migrations:
             print(f"Applied migration {file_name.name}")
         
         except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Exception applying migration {file_name.name}: {e}")
             raise
 
 async def main():
     try:
-        await db.connect()
-
-        migration_runner = Migrations(db.pool)
-
+        print("Starting Migration Runner...")
+        migration_runner = Migrations()
         await migration_runner.run_pending_migrations()
-
-        await db.disconnect()
-
+        print("Migration Runner Completed")
     except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Migration Runner Failed: {e}")
             raise
+    finally:
+        await close_pool()
 
 if __name__=="__main__":
     asyncio.run(main())

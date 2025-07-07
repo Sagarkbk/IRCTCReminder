@@ -1,12 +1,12 @@
 from fastapi import FastAPI
-from Routes.users import usersRouter
-from Routes.telegram import telegramRouter
+from Routes.auth import authRouter
+from Routes.user import userRouter
+from Routes.holiday import holidayRouter
+from Routes.integration import integrationRouter
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return "Root App"
-
-app.include_router(usersRouter)
-app.include_router(telegramRouter)
+app.include_router(authRouter, prefix="/api")
+app.include_router(userRouter, prefix="/api")
+app.include_router(holidayRouter, prefix="/api")
+app.include_router(integrationRouter, prefix="/api")
