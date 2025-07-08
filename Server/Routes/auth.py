@@ -13,15 +13,18 @@ authRouter = APIRouter(prefix="/auth")
 async def googleAuth(body: GoogleAuth, response: Response):
     try:
         RECEIVED_CLIENT_ID = body.clientId
+
         if RECEIVED_CLIENT_ID != WEB_CLIENT_ID:
             response.status_code = status.HTTP_401_UNAUTHORIZED
             return "Invalid Client ID"
-        data = userVerification(body)
-        if data.existingUser and data.user:
+        
+        result = userVerification(body)
+
+        if result.existingUser:
             response.status_code = status.HTTP_200_OK
-            return data.user
-        if data.newUser:
-            response.status_code = status.HTTP_200_OK
-            return "User created"
+            return {"message": "User logged in", "user": result["user"]}
+        
+        response.status_code = status.HTTP_201_CREATED
+        return {"message": "New user created", "user": result["user"]}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

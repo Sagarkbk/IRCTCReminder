@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
-class GoogleAuth:
-    idToken: str;
-    clientId: str;
+class GoogleAuth(BaseModel):
+    idToken: str
+    clientId: str

@@ -1,4 +1,4 @@
-from Database.connection import get_db_connection, close_pool
+from Database.connection import get_db_connection
 from datetime import datetime, timezone
 
 async def create_user(userInfo):
@@ -6,26 +6,47 @@ async def create_user(userInfo):
         conn = await get_db_connection()
         query = """
                 INSERT INTO users (google_id, email, username, last_updated_at) 
-                VALUES ($1, $2, $3, $4)
+                VALUES ($1, $2, $3, $4) 
+                RETURNING *
                 """
-        await conn.execute(query, userInfo.get('sub'), userInfo.get('email'), 
-                        userInfo.get('name'), datetime.now(timezone.utc))
-        return {"existingUser": False, "newUser": True}
+        result = await conn.fetchrow(
+                                    query, 
+                                    userInfo.get('sub'), 
+                                    userInfo.get('email'), 
+                                    userInfo.get('name'), 
+                                    datetime.now(timezone.utc)
+                                )
+        return dict(result)
     except Exception as e:
         raise
-    finally:
-        await close_pool()
 
 async def get_user(userInfo):
     try:
         conn = await get_db_connection()
         query = """
-                SELECT * FROM users WHERE google_id = $1 AND email = $2 AND username = $3
+                SELECT * FROM users WHERE google_id = $1
                 """
-        existingUser = await conn.fetchrow(query, userInfo.get('sub'), userInfo.get('email'),
-                                        userInfo.get('name'))
-        return existingUser
+        existingUser = await conn.fetchrow(query, userInfo.get('sub'))
+        return dict(existingUser) if existingUser else None
     except Exception as e:
         raise
-    finally:
-        await close_pool()
+
+async def update_user(userInfo, user_id):
+    try:
+        conn = await get_db_connection()
+        query = """
+                UPDATE users 
+                SET email = $1, username = $2, last_updated_at = $3
+                WHERE id = $4
+                RETURNING *
+                """
+        result = await conn.fetchrow(
+                                    query, 
+                                    userInfo.get('email'), 
+                                    userInfo.get('name'), 
+                                    datetime.now(timezone.utc), 
+                                    user_id
+                                )
+        return dict(result)
+    except Exception as e:
+        raise
