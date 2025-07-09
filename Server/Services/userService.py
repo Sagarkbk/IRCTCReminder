@@ -20,13 +20,13 @@ async def create_user(userInfo):
     except Exception as e:
         raise
 
-async def get_user(userInfo):
+async def get_user(user_id):
     try:
         conn = await get_db_connection()
         query = """
-                SELECT * FROM users WHERE google_id = $1
+                SELECT * FROM users WHERE id = $1
                 """
-        existingUser = await conn.fetchrow(query, userInfo.get('sub'))
+        existingUser = await conn.fetchrow(query, user_id)
         return dict(existingUser) if existingUser else None
     except Exception as e:
         raise

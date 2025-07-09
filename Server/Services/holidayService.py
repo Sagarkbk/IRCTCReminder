@@ -12,7 +12,7 @@ async def get_existing_holidays(user_id):
     except Exception as e:
         raise
 
-async def add_holidays(body):
+async def add_holidays(body, user_id):
     try:
         conn = await get_db_connection()
         query = """
@@ -26,13 +26,13 @@ async def add_holidays(body):
         for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 
                                             body.category, body.day_before_sent, 
                                             body.release_day_sent):
-            holiday = await conn.execute(query, body.user_id, hn, hd, cat, dbs, rds, current_time)
+            holiday = await conn.fetchrow(query, user_id, hn, hd, cat, dbs, rds, current_time)
             holidays.append(holiday)
         return holidays
     except Exception as e:
         raise
 
-async def update_holidays(body):
+async def update_holidays(body, user_id):
     try:
         conn = await get_db_connection()
         upsert_holiday = """
@@ -55,7 +55,7 @@ async def update_holidays(body):
                                             body.release_day_sent):
                 holiday = await trsc.fetchrow(
                                             upsert_holiday,
-                                            body.user_id,
+                                            user_id,
                                             hn,
                                             hd,
                                             cat,
