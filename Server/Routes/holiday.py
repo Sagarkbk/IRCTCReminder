@@ -1,42 +1,36 @@
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, Response, status, Depends, HTTPException
 from Services.holidayService import get_existing_holidays, add_holidays, update_holidays
-from Models.holiday import HolidayBody, HolidayResponse
-from typing import List
+from Models.holiday import HolidayBody
 from Middlewares.middlewares import authMiddleware
 
 holidayRouter = APIRouter(prefix="/holiday")
 
-@holidayRouter.get("/existing", response_model=List[HolidayResponse])
-async def getHolidays(response: Response, user_id: int =  Depends(authMiddleware)):
+@holidayRouter.get("/existing", status_code = status.HTTP_200_OK)
+async def getHolidays(user_id: int =  Depends(authMiddleware)):
     try:
         holidays = await get_existing_holidays(user_id)
-        response.status_code = status.HTTP_200_OK
-        return holidays
+        return {"holidays": holidays}
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@holidayRouter.post("/add")
-async def addHolidays(body: HolidayBody, response: Response, user_id: int =  Depends(authMiddleware)):
+@holidayRouter.post("/add", status_code = status.HTTP_200_OK)
+async def addHolidays(body: HolidayBody, user_id: int =  Depends(authMiddleware)):
     try:
-        if not(len(body['holiday_name'])==len(body['holiday_date'])==len(body['category'])==
-            len(body['day_before_sent'])==len(body['release_day_sent'])):
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return "Number of records is not matching"
+        if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
+            len(body.day_before_sent)==len(body.release_day_sent)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Number of records not matching")
         holidays = await add_holidays(body, user_id)
-        response.status_code = status.HTTP_200_OK
-        return {"message": "Here are your holidays", "data": holidays}
+        return {"holidays": holidays}
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@holidayRouter.put("/update")
-async def updateHolidays(body: HolidayBody, response: Response, user_id: int =  Depends(authMiddleware)):
+@holidayRouter.put("/update", status_code = status.HTTP_200_OK)
+async def updateHolidays(body: HolidayBody, user_id: int =  Depends(authMiddleware)):
     try:
-        if not(len(body['holiday_name'])==len(body['holiday_date'])==len(body['category'])==
-            len(body['day_before_sent'])==len(body['release_day_sent'])):
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return "Number of records is not matching"
+        if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
+            len(body.day_before_sent)==len(body.release_day_sent)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Number of records not matching")
         holidays = await update_holidays(body, user_id)
-        response.status_code = status.HTTP_200_OK
-        return {"message": "Here are your updated holidays", "data": holidays}
+        return {"holidays": holidays}
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

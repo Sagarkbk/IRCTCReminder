@@ -4,21 +4,21 @@ from Services.integrationService import generateLinkingToken, linkTelegramAccoun
 
 integrationRouter = APIRouter(prefix="/user")
 
-@integrationRouter.post("/telegram/generateToken")
+@integrationRouter.post("/telegram/generateToken", status_code = status.HTTP_201_CREATED)
 async def generateToken(user_id: int = Depends(authMiddleware)):
     try:
         token = await generateLinkingToken(user_id)
-        return token
+        return {"token": token}
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@integrationRouter.put("/telegram/linkAccount")
+@integrationRouter.put("/telegram/linkAccount", status_code = status.HTTP_200_OK)
 async def linkAccount(body):
     try:
         user = await validateTokenAndGetUser(body.token)
         if user['telegram_id']:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your Google and Telegram accounts are already linked.")
         updated_user = await linkTelegramAccount(body, user['id'], body.token)
-        return updated_user
+        return {"user": updated_user}
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

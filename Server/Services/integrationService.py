@@ -1,5 +1,5 @@
 from Database.connection import get_db_connection
-from Services.userService import get_user
+from Services.userService import get_user_by_id
 from datetime import datetime, timedelta, timezone
 import secrets
 from fastapi import HTTPException, status
@@ -7,7 +7,6 @@ from fastapi import HTTPException, status
 async def generateLinkingToken(user_id):
     try:
         conn = await get_db_connection()
-        user = await get_user(user_id)
         token = secrets.token_urlsafe(32)
         query = """
                 INSERT INTO google_telegram_link (user_id, token, expires_at)
@@ -22,7 +21,7 @@ async def generateLinkingToken(user_id):
         )
         return token
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 async def linkTelegramAccount(body, user_id, token):
     try:
@@ -46,7 +45,7 @@ async def linkTelegramAccount(body, user_id, token):
             await trsc.execute(update_token_query, True, user_id, token)
         return user
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 async def validateTokenAndGetUser(token: str):
     try:
@@ -66,10 +65,10 @@ async def validateTokenAndGetUser(token: str):
 
         user_id = token_data['user_id']
 
-        user = await get_user(user_id)
+        user = await get_user_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User associated with this token no longer exists.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User associated with this token does not exists.")
 
         return user
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

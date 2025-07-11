@@ -1,5 +1,6 @@
 from Database.connection import get_db_connection
 from datetime import datetime, timezone
+from fastapi import HTTPException, status
 
 async def get_existing_holidays(user_id):
     try:
@@ -10,7 +11,7 @@ async def get_existing_holidays(user_id):
         holidays = await conn.fetch(query, user_id)
         return holidays
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 async def add_holidays(body, user_id):
     try:
@@ -66,4 +67,4 @@ async def update_holidays(body, user_id):
                 holidays.append(holiday)
         return holidays
     except Exception as e:
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

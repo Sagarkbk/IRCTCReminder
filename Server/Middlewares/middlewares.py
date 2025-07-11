@@ -2,7 +2,7 @@ import jwt
 from fastapi import Header, HTTPException, status
 from dotenv import load_dotenv
 import os
-from Services.userService import get_user
+from Services.userService import get_user_by_id
 
 load_dotenv
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -20,7 +20,7 @@ async def authMiddleware(authorization = Header(...)):
         payload = jwt.decode(jwt_token, JWT_SECRET, algorithms="HS256")
 
         user_id = payload['user_id']
-        user = await get_user(user_id)
+        user = await get_user_by_id(user_id)
         if not user:
             raise HTTPException(
                                 status_code=status.HTTP_404_NOT_FOUND, 
