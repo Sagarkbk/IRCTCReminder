@@ -1,11 +1,21 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from Middlewares.middlewares import authMiddleware
+from Services.userService import get_user_by_id, update_user_settings
 
 userRouter = APIRouter(prefix="/user")
 
-@userRouter.get("/profile")
-async def getProfile():
-    pass
+@userRouter.get("/profile", status_code = status.HTTP_200_OK)
+async def getProfile(user_id: int = Depends(authMiddleware)):
+    try:
+        user = await get_user_by_id(user_id)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@userRouter.put("/preferences")
-async def updateProfile():
-    pass
+@userRouter.put("/preferences", status_code = status.HTTP_200_OK)
+async def updateProfile(body, user_id: int = Depends(authMiddleware)):
+    try:
+        user = await update_user_settings(user_id, body)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

@@ -62,3 +62,24 @@ async def update_user(userInfo, user_id):
         return dict(result)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    
+async def update_user_settings(user_id, body):
+    try:
+        conn = await get_db_connection()
+        user = await get_user_by_id(user_id)
+        calendar_enabled = user['calendar_enabled']
+        telegram_enabled = user['telegram_enabled']
+        if body.calendar_enabled is not None:
+            calendar_enabled = body.calendar_enabled
+        if body.telegram_enabled is not None:
+            telegram_enabled = body.telegram_enabled
+        query = """
+                UPDATE users
+                SET calendar_enabled = $1, telegram_enabled = $2
+                WHERE id = $3
+                RETURNING *
+                """
+        updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled, user_id)
+        return updated_user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
