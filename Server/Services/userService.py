@@ -1,5 +1,5 @@
 from Database.connection import get_db_connection
-from datetime import datetime, timezone
+import pendulum
 from fastapi import HTTPException, status
 
 async def create_user(userInfo):
@@ -15,7 +15,7 @@ async def create_user(userInfo):
                                     userInfo.get('sub'), 
                                     userInfo.get('email'), 
                                     userInfo.get('name'), 
-                                    datetime.now(timezone.utc)
+                                    pendulum.now('UTC')
                                 )
         return dict(result)
     except Exception as e:
@@ -56,7 +56,7 @@ async def update_user(userInfo, user_id):
                                     query, 
                                     userInfo.get('email'), 
                                     userInfo.get('name'), 
-                                    datetime.now(timezone.utc), 
+                                    pendulum.now('UTC'), 
                                     user_id
                                 )
         return dict(result)
@@ -75,11 +75,12 @@ async def update_user_settings(user_id, body):
             telegram_enabled = body.telegram_enabled
         query = """
                 UPDATE users
-                SET calendar_enabled = $1, telegram_enabled = $2
-                WHERE id = $3
+                SET calendar_enabled = $1, telegram_enabled = $2, last_updated_at = $3
+                WHERE id = $4
                 RETURNING *
                 """
-        updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled, user_id)
+        updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
+                                        pendulum.now('UTC'), user_id)
         return updated_user
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

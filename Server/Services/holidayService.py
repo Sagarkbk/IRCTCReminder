@@ -1,5 +1,5 @@
 from Database.connection import get_db_connection
-from datetime import datetime, timezone
+import pendulum
 from fastapi import HTTPException, status
 
 async def get_existing_holidays(user_id):
@@ -22,7 +22,7 @@ async def add_holidays(body, user_id):
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *
                 """
-        current_time = datetime.now(timezone.utc)
+        current_time = pendulum.now('UTC')
         holidays = []
         for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 
                                             body.category, body.day_before_sent, 
@@ -48,7 +48,7 @@ async def update_holidays(body, user_id):
                 last_updated_at = EXCLUDED.last_updated_at
                 RETURNING *
                 """
-        current_time = datetime.now(timezone.utc)
+        current_time = pendulum.now('UTC')
         holidays = []
         async with await conn.transaction() as trsc:
             for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 

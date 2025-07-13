@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 import os
 from .userService import create_user, get_user_by_google_id, update_user
 import jwt
-from datetime import datetime, timedelta, timezone
 from fastapi import status, HTTPException
+import pendulum
 
 load_dotenv
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
@@ -30,10 +30,10 @@ async def userVerification(body):
     
 def createJwtToken(user):
     try:
-        expires = datetime.now(timezone.utc) + timedelta(days=2)
+        expires = pendulum.now('UTC').add(days=2)
         jwt_token = jwt.encode(
-                            {"user_id": user.id, "email": user.email, 
-                            "username": user.username, "exp": expires},
+                            {"user_id": user['id'], "email": user['email'], 
+                            "username": user['username'], "exp": expires},
                             JWT_SECRET,
                             algorithm="HS256"
                         )

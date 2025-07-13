@@ -1,6 +1,6 @@
 from Database.connection import get_db_connection
 from Services.userService import get_user_by_id
-from datetime import datetime, timedelta, timezone
+import pendulum
 import secrets
 from fastapi import HTTPException, status
 
@@ -12,7 +12,7 @@ async def generateLinkingToken(user_id):
                 INSERT INTO google_telegram_link (user_id, token, expires_at)
                 VALUES ($1, $2, $3)
                 """
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+        expires_at = pendulum.now('UTC').add(minutes=30)
         await conn.execute(
             query,
             user_id,
@@ -38,7 +38,7 @@ async def linkTelegramAccount(body, user_id, token):
                             UPDATE google_telegram_link SET is_used = $1
                             WHERE user_id = $2 AND token = $3
                             """
-        current_time = datetime.now(timezone.utc)
+        current_time = pendulum.now('UTC')
         user = None
         async with await conn.transaction() as trsc:
             user = await trsc.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
@@ -60,7 +60,7 @@ async def validateTokenAndGetUser(token: str):
         if token_data['is_used']:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has already been used.")
 
-        if token_data['expires_at'] < datetime.now(timezone.utc):
+        if token_data['expires_at'] < pendulum.now('UTC'):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has expired.")
 
         user_id = token_data['user_id']
