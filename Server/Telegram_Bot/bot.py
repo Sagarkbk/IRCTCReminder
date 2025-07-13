@@ -54,15 +54,9 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print(f"Exception in /commandHandler: {e}")
 
-def main():
+def bot_initialization():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))
     app.add_handler(CallbackQueryHandler(commandHandler))
-    app.run_polling(
-        poll_interval=2.0, 
-        bootstrap_retries=3,)
-    print("Inside main")
-
-if __name__=="__main__":
-    main()
+    return app
