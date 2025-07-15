@@ -2,12 +2,17 @@ import asyncpg
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from fastapi import HTTPException, status
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+
 _pool = None
 
 async def init_pool():
     try:
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        if not DATABASE_URL:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                detail="DATABASE_URL is not available in Environment Variables")
         global _pool
         if _pool is None or _pool._closed:
             if not DATABASE_URL:
