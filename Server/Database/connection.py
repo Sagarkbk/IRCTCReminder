@@ -2,9 +2,7 @@ import asyncpg
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
-load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 _pool = None
 

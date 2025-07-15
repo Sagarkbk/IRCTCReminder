@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Response, HTTPException, status
-from dotenv import load_dotenv
 import os
 from Models.auth import GoogleAuth
 from Services.authService import userVerification
 
-load_dotenv()
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 
 authRouter = APIRouter(prefix="/auth")

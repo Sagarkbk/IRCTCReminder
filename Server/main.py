@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
 from Routes.auth import authRouter
 from Routes.user import userRouter
 from Routes.holiday import holidayRouter
@@ -6,6 +7,8 @@ from Routes.integration import integrationRouter
 from Routes.telegram import telegramRouter
 from Telegram_Bot.bot import bot_initialization
 from contextlib import asynccontextmanager
+
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

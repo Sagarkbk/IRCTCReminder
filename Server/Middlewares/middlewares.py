@@ -1,10 +1,8 @@
 import jwt
 from fastapi import Header, HTTPException, status
-from dotenv import load_dotenv
 import os
 from Services.userService import get_user_by_id
 
-load_dotenv
 JWT_SECRET = os.getenv("JWT_SECRET")
 
 async def authMiddleware(authorization = Header(...)):

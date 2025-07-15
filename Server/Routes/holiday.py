@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status, Depends, HTTPException
+from fastapi import APIRouter, status, Depends, HTTPException
 from Services.holidayService import get_existing_holidays, add_holidays, update_holidays
 from Models.holiday import HolidayBody
 from Middlewares.middlewares import authMiddleware

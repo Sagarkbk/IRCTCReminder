@@ -1,9 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler, Application
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
 TOKEN = os.getenv("TOKEN")
 DATABASE_URl=os.getenv("DATABASE_URL")
 

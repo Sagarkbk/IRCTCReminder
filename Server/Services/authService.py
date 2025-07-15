@@ -1,13 +1,11 @@
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from dotenv import load_dotenv
 import os
 from .userService import create_user, get_user_by_google_id, update_user
 import jwt
 from fastapi import status, HTTPException
 import pendulum
 
-load_dotenv
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 JWT_SECRET = os.getenv("JWT_SECRET")
 
