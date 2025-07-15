@@ -2,9 +2,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler, Application
 import os
 
-TOKEN = os.getenv("TOKEN")
-DATABASE_URl=os.getenv("DATABASE_URL")
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         options = [
@@ -53,6 +50,10 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"Exception in /commandHandler: {e}")
 
 def bot_initialization():
+    TOKEN = os.getenv("TOKEN")
+    DATABASE_URl=os.getenv("DATABASE_URL")
+    if not TOKEN:
+        raise ValueError("Telegram bot token not found in environment variables.")
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))

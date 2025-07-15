@@ -1,5 +1,5 @@
 from google.oauth2 import id_token
-from google.auth.transport import requests
+from google.auth.transport.requests import Request
 import os
 from .userService import create_user, get_user_by_google_id, update_user
 import jwt
@@ -11,7 +11,7 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 async def userVerification(body):
     try:
-        userInfo = id_token.verify_oauth2_token(body.idToken, requests.Request, WEB_CLIENT_ID)
+        userInfo = id_token.verify_oauth2_token(body.idToken, Request(), WEB_CLIENT_ID)
 
         existingUser = await get_user_by_google_id(userInfo.get('sub'))
 

@@ -15,11 +15,11 @@ async def googleAuth(body: GoogleAuth, response: Response):
         if RECEIVED_CLIENT_ID != WEB_CLIENT_ID:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Client ID")
         
-        result = userVerification(body)
+        result = await userVerification(body)
 
-        if result.existingUser:
+        if result['existingUser']:
             response.status_code = status.HTTP_200_OK
         
-        return {"user": result.user, "token": result.token}
+        return {"user": result['user'], "token": result['token']}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
