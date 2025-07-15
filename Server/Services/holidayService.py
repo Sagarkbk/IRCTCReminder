@@ -20,16 +20,14 @@ async def add_holidays(body, user_id):
                     INSERT INTO selected_holidays
                     (user_id, holiday_name, holiday_date, category, day_before_sent, release_day_sent, last_updated_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING *
                     """
             current_time = pendulum.now('UTC')
-            holidays = []
             for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 
                                                 body.category, body.day_before_sent, 
                                                 body.release_day_sent):
-                holiday = await conn.fetchrow(query, user_id, hn, hd, cat, dbs, rds, current_time)
-                holidays.append(holiday)
-            return holidays
+                await conn.execute(query, user_id, hn, hd, cat, dbs, rds, current_time)
+        holidays = await get_existing_holidays(user_id)
+        return holidays
     except Exception as e:
         raise
 
@@ -46,15 +44,13 @@ async def update_holidays(body, user_id):
                     day_before_sent = EXCLUDED.day_before_sent,
                     release_day_sent = EXCLUDED.release_day_sent,
                     last_updated_at = EXCLUDED.last_updated_at
-                    RETURNING *
                     """
             current_time = pendulum.now('UTC')
-            holidays = []
-            async with await conn.transaction() as trsc:
+            async with conn.transaction():
                 for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 
                                                 body.category, body.day_before_sent, 
                                                 body.release_day_sent):
-                    holiday = await trsc.fetchrow(
+                    await conn.execute(
                                                 upsert_holiday,
                                                 user_id,
                                                 hn,
@@ -64,7 +60,7 @@ async def update_holidays(body, user_id):
                                                 rds,
                                                 current_time
                                             )
-                    holidays.append(holiday)
+            holidays = await get_existing_holidays(user_id)
             return holidays
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
