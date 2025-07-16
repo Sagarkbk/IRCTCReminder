@@ -3,7 +3,9 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from fastapi import HTTPException, status
+from dotenv import load_dotenv
 
+load_dotenv()
 
 _pool = None
 

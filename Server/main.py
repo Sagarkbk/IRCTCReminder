@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 from Routes.auth import authRouter
 from Routes.user import userRouter
-from Routes.holiday import holidayRouter
+from Routes.journey import journeyRouter
 from Routes.integration import integrationRouter
 from Routes.telegram import telegramRouter
 from Telegram_Bot.bot import bot_initialization
@@ -24,6 +24,6 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(authRouter, prefix="/api")
 app.include_router(userRouter, prefix="/api")
-app.include_router(holidayRouter, prefix="/api")
+app.include_router(journeyRouter, prefix="/api")
 app.include_router(integrationRouter, prefix="/api")
 app.include_router(telegramRouter, prefix="/api")

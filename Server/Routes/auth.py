@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Response, HTTPException, status
 import os
-from Models.auth import GoogleAuth
 from Services.authService import userVerification
 
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
@@ -8,7 +7,7 @@ WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 authRouter = APIRouter(prefix="/auth")
 
 @authRouter.post("/google", status_code=status.HTTP_201_CREATED)
-async def googleAuth(body: GoogleAuth, response: Response):
+async def googleAuth(body, response: Response):
     try:
         RECEIVED_CLIENT_ID = body.clientId
 
