@@ -19,8 +19,6 @@ async def authMiddleware(authorization = Header(...)):
     
         jwt_token = authorization.split(" ")[1]
 
-        print(f"JWT_SECRET value: {JWT_SECRET}")
-
         payload = jwt.decode(jwt_token, JWT_SECRET, algorithms="HS256")
 
         user_id = payload['user_id']

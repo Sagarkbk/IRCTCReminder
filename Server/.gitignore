@@ -3,3 +3,7 @@ venv/
 __pycache__
 Database/__pycache__
 Telegram_Bot/__pycache__
+Middlewares/__pycache__
+Models/__pycache__
+Routes/__pycache__
+Services/__pycache__
