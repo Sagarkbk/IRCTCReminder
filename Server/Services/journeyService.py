@@ -44,7 +44,7 @@ async def add_journeys(body, user_id):
         journey = None
         journey_id = None
         async with get_db_connection() as conn:
-            
+
             journey_query = """
                                 INSERT INTO journeys
                                 (user_id, journey_name, journey_date, release_day_date, day_before_release_date, reminder_on_release_day, reminder_on_day_before, sent_reminder_release_day, sent_reminder_day_before, last_updated_at)
@@ -81,42 +81,66 @@ async def add_journeys(body, user_id):
     except Exception as e:
         raise
 
-async def update_journeys(body, user_id):
+async def update_journeys(body, journey_id):
     try:
         async with get_db_connection() as conn:
-
-            upsert_holiday = """
-                    INSERT INTO selected_holidays
-                    (user_id, holiday_name, holiday_date, category, day_before_sent, release_day_sent, last_updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    ON CONFLICT (user_id, holiday_name, holiday_date)
-                    DO UPDATE
-                    SET category = EXCLUDED.category,
-                    day_before_sent = EXCLUDED.day_before_sent,
-                    release_day_sent = EXCLUDED.release_day_sent,
-                    last_updated_at = EXCLUDED.last_updated_at
+            get_query = """
+                    SELECT j.id as journey_id, j.journey_name, j.release_day_date,
+                    j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
+                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date
+                    FROM journeys j LEFT JOIN custom_reminders cr
+                    ON j.id = cr.journey_id
+                    WHERE j.id = $1
                 """
             
-            current_time = pendulum.now('UTC')
+            records = await conn.fetch(get_query, journey_id)
+            if not records:
+                return None        
+            
+            reminder_on_release_day = records[0]['reminder_on_release_day']
+            reminder_on_day_before = records[0]['reminder_on_day_before']
+            journey_name = records[0]['journey_name']
 
+            if body.reminder_on_release_day is not None:
+                reminder_on_release_day = body.reminder_on_release_day
+            if body.reminder_on_day_before is not None:
+                reminder_on_day_before = body.reminder_on_day_before
+            if body.journey_name is not None:
+                journey_name = body.journey_name
+            
             async with conn.transaction():
+                update_journey_query = """
+                                        UPDATE journeys
+                                        SET reminder_on_release_day = $1,
+                                        reminder_on_day_before = $2,
+                                        journey_name = $3
+                                        WHERE id = $4
+                                    """
+                await conn.execute(update_journey_query, reminder_on_release_day, reminder_on_day_before, journey_name, journey_id)
 
-                for hn, hd, cat, dbs, rds in zip(body.holiday_name, body.holiday_date, 
-                                                body.category, body.day_before_sent, 
-                                                body.release_day_sent):
-                    await conn.execute(
-                                                upsert_holiday,
-                                                user_id,
-                                                hn,
-                                                hd,
-                                                cat,
-                                                dbs,
-                                                rds,
-                                                current_time
-                                            )
-                    
-            holidays = await get_existing_journeys(user_id)
-            return holidays
+                existing_custom_reminders = [record['reminder_date'] for record in records]
+                reminders_to_be_deleted = []
+                reminders_to_be_inserted = []
+
+                for date in existing_custom_reminders:
+                    if date not in body.custom_reminders:
+                        reminders_to_be_deleted.append(date)
+                
+                for date in body.custom_reminders:
+                    if date not in existing_custom_reminders:
+                        reminders_to_be_inserted.append(date)
+                
+                if reminders_to_be_deleted:
+                    query = "DELETE FROM custom_reminders WHERE journey_id = $1 AND reminder_date = ANY($2::date[])"
+                    await conn.execute(query, journey_id, reminders_to_be_deleted)
+
+                if reminders_to_be_inserted:
+                    records_to_insert = [(journey_id, date, False) for date in reminders_to_be_inserted]
+                    await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
+
+        journey = await get_journey_by_id(journey_id)
+        return journey
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
