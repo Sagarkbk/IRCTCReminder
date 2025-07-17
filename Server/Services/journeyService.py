@@ -5,10 +5,35 @@ from fastapi import HTTPException, status
 async def get_existing_journeys(user_id):
     try:
         async with get_db_connection() as conn:
-            query = """
+            journeys_query = """
                     SELECT * FROM journeys WHERE user_id = $1
                     """
-            journeys = await conn.fetch(query, user_id)
+            
+            journeys_records = await conn.fetch(journeys_query, user_id)
+
+            if not journeys_records:
+                return []
+            
+            journeys_ids = [journey['id'] for journey in journeys_records]
+
+            custom_reminders_query = """
+                    SELECT * FROM custom_reminders WHERE journey_id = ANY($1::bigint[])
+                    """
+            
+            custom_reminders = await conn.fetch(custom_reminders_query, journeys_ids)
+
+            reminders_map = {}
+            for reminder in custom_reminders:
+                if reminder['journey_id'] not in reminders_map:
+                    reminders_map[reminder['journey_id']] = []
+                reminders_map[reminder['journey_id']].append(dict(reminder))
+
+            journeys = []
+            for journey in journeys_records:
+                journey_dict = dict(journey)
+                journey_dict['custom_reminders'] = reminders_map.get(journey['id'], [])
+                journeys.append(journey_dict)
+
             return journeys
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
@@ -38,9 +63,7 @@ async def add_journeys(body, user_id):
                     custom_dates.append(reminder_date)
             async with conn.transaction():
                 new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, remind_on_release_day, remind_on_day_before, False, False, current_time)
-                records_to_insert = []
-                for date in custom_dates:
-                    records_to_insert.append((new_journey['id'], date, False))
+                records_to_insert = [(new_journey['id'], date, False) for date in custom_dates]
                 await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
         journeys = await get_existing_journeys(user_id)
         return journeys
