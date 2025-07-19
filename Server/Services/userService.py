@@ -67,6 +67,8 @@ async def update_user_settings(user_id, body):
     try:
         async with get_db_connection() as conn:
             user = await get_user_by_id(user_id)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
             calendar_enabled = user['calendar_enabled']
             telegram_enabled = user['telegram_enabled']
             if body.calendar_enabled is not None:

@@ -8,6 +8,8 @@ userRouter = APIRouter(prefix="/user")
 async def getProfile(user_id: int = Depends(authMiddleware)):
     try:
         user = await get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         return user
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
