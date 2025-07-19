@@ -2,12 +2,14 @@ from Database.connection import get_db_connection
 from Services.userService import get_user_by_id
 import pendulum
 import secrets
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from Services.redisService import get_redis
+from redis.asyncio import Redis
 
-async def generateLinkingToken(user_id):
+async def generateLinkingToken(user_id, rds: Redis = Depends(get_redis)):
     try:
         async with get_db_connection() as conn:
-            user = await get_user_by_id(user_id)
+            user = await get_user_by_id(user_id, rds)
             if not user:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exists")
             
@@ -51,7 +53,7 @@ async def linkTelegramAccount(body, user_id, token):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def validateTokenAndGetUser(token: str):
+async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
     try:
         async with get_db_connection() as conn:
             token_query = "SELECT * FROM google_telegram_link WHERE token = $1"
@@ -68,7 +70,7 @@ async def validateTokenAndGetUser(token: str):
 
             user_id = token_data['user_id']
 
-            user = await get_user_by_id(user_id)
+            user = await get_user_by_id(user_id, rds)
             if not user:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User associated with this token does not exists.")
 

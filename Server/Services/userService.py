@@ -1,7 +1,9 @@
 from Database.connection import get_db_connection
 import pendulum
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 import json
+from Services.redisService import get_redis
+from redis.asyncio import Redis
 
 async def create_user(userInfo):
     try:
@@ -83,10 +85,10 @@ async def update_user(userInfo, user_id):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
     
-async def update_user_settings(user_id, body):
+async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
     try:
         async with get_db_connection() as conn:
-            user = await get_user_by_id(user_id)
+            user = await get_user_by_id(user_id, rds)
             if not user:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
             calendar_enabled = user['calendar_enabled']

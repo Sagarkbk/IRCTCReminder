@@ -1,9 +1,11 @@
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
 import os
 from Services.userService import get_user_by_id
+from Services.redisService import get_redis
+from redis.asyncio import Redis
 
-async def authMiddleware(authorization = Header(...)):
+async def authMiddleware(authorization = Header(...), rds: Redis = Depends(get_redis)):
     try:
         JWT_SECRET = os.getenv("JWT_SECRET")
         
@@ -22,7 +24,7 @@ async def authMiddleware(authorization = Header(...)):
         payload = jwt.decode(jwt_token, JWT_SECRET, algorithms="HS256")
 
         user_id = payload['user_id']
-        user = await get_user_by_id(user_id)
+        user = await get_user_by_id(user_id, rds)
         if not user:
             raise HTTPException(
                                 status_code=status.HTTP_404_NOT_FOUND, 
