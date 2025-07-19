@@ -65,12 +65,12 @@ async def add_journey(body, user_id):
 
                 journey_id = new_journey['id']
 
-        journey = await get_journey_by_id(journey_id)
+        journey = await get_journey_by_id(user_id, journey_id)
         return journey
     except Exception as e:
         raise
 
-async def update_journey(body, journey_id):
+async def update_journey(body, user_id, journey_id):
     try:
         async with get_db_connection() as conn:
             get_query = """
@@ -79,10 +79,10 @@ async def update_journey(body, journey_id):
                     cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date
                     FROM journeys j LEFT JOIN custom_reminders cr
                     ON j.id = cr.journey_id
-                    WHERE j.id = $1
+                    WHERE j.user_id = $1 AND j.id = $2
                 """
             
-            records = await conn.fetch(get_query, journey_id)
+            records = await conn.fetch(get_query, user_id, journey_id)
             if not records:
                 return None        
             
@@ -121,13 +121,13 @@ async def update_journey(body, journey_id):
                     records_to_insert = [(journey_id, date, False) for date in reminders_to_be_inserted]
                     await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
 
-        journey = await get_journey_by_id(journey_id)
+        journey = await get_journey_by_id(user_id, journey_id)
         return journey
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def get_journey_by_id(journey_id):
+async def get_journey_by_id(user_id, journey_id):
     try:
         async with get_db_connection() as conn:
             query = """
@@ -136,10 +136,10 @@ async def get_journey_by_id(journey_id):
                     cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.is_sent
                     FROM journeys j LEFT JOIN custom_reminders cr
                     ON j.id = cr.journey_id
-                    WHERE j.id = $1
+                    WHERE j.user_id = $1 AND j.id = $2
                 """
             
-            records = await conn.fetch(query, journey_id)
+            records = await conn.fetch(query, user_id, journey_id)
             if not records:
                 return None
             
