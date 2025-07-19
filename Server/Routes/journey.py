@@ -1,10 +1,11 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from Services.journeyService import get_existing_journeys, add_journey, update_journey, delete_journey_by_id
 from Middlewares.middlewares import authMiddleware
+from fastapi_limiter.depends import RateLimiter
 
 journeyRouter = APIRouter(prefix="/journey")
 
-@journeyRouter.get("/existing", status_code = status.HTTP_200_OK)
+@journeyRouter.get("/existing", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=60, seconds=60))])
 async def getJourneys(user_id: int =  Depends(authMiddleware)):
     try:
         holidays = await get_existing_journeys(user_id)
@@ -12,7 +13,7 @@ async def getJourneys(user_id: int =  Depends(authMiddleware)):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@journeyRouter.post("/add", status_code = status.HTTP_200_OK)
+@journeyRouter.post("/add", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def addJourney(body, user_id: int =  Depends(authMiddleware)):
     try:
         if (not body.journey_name) or body.journey_name is None:
@@ -29,7 +30,7 @@ async def addJourney(body, user_id: int =  Depends(authMiddleware)):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-@journeyRouter.put("/update", status_code = status.HTTP_200_OK)
+@journeyRouter.put("/update", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware)):
     try:
         if (not body.journey_name) or body.journey_name is None:
@@ -46,7 +47,7 @@ async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
     
-@journeyRouter.delete("/delete", status_code=status.HTTP_200_OK)
+@journeyRouter.delete("/delete", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def deleteJourney(journey_id, user_id: int =  Depends(authMiddleware)):
     try:
         holidays = await delete_journey_by_id(user_id, journey_id)

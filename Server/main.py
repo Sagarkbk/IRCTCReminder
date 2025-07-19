@@ -7,16 +7,33 @@ from Routes.integration import integrationRouter
 from Routes.telegram import telegramRouter
 from Telegram_Bot.bot import bot_initialization
 from contextlib import asynccontextmanager
+from fastapi_limiter import FastAPILimiter
+import redis.asyncio as redis
 
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    redis_pool = redis.ConnectionPool.from_url("redis://localhost:6379", max_connections=20, encoding="utf8", decode_responses=True)
+    redis_connection = redis.Redis(connection_pool=redis_pool)
+
+    await FastAPILimiter.init(redis_connection)
+    app.state.redis_client = redis_connection
+    print("FastAPILimiter has been initialized")
+
     ptb_app = bot_initialization()
     await ptb_app.initialize()
     app.state.ptb_app = ptb_app
     print("Bot has been initialized")
+
     yield
+
+    await FastAPILimiter.close()
+    print("FastAPILimiter has been closed")
+
+    await redis_pool.disconnect()
+    print("Redis pool disconnected")
+
     await app.state.ptb_app.shutdown()
     print("Bot has been shutdown")
 

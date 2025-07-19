@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Response, HTTPException, status
+from fastapi import APIRouter, Response, HTTPException, status, Depends
 import os
 from Services.authService import userVerification
+from fastapi_limiter.depends import RateLimiter
 
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 
 authRouter = APIRouter(prefix="/auth")
 
-@authRouter.post("/google", status_code=status.HTTP_201_CREATED)
+@authRouter.post("/google", status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def googleAuth(body, response: Response):
     try:
         RECEIVED_CLIENT_ID = body.clientId

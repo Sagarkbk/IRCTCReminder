@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from telegram import Update
+from fastapi_limiter.depends import RateLimiter
 
 telegramRouter = APIRouter(prefix="/telegram")
 
-@telegramRouter.post("/webhook", status_code=status.HTTP_200_OK)
+@telegramRouter.post("/webhook", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=1000, seconds=60))])
 async def telegram_webhook(request: Request):
     try:
         ptb_app = request.app.state.ptb_app
