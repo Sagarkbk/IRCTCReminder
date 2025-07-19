@@ -5,7 +5,7 @@ from Middlewares.middlewares import authMiddleware
 journeyRouter = APIRouter(prefix="/holiday")
 
 @journeyRouter.get("/existing", status_code = status.HTTP_200_OK)
-async def getHolidays(user_id: int =  Depends(authMiddleware)):
+async def getJourneys(user_id: int =  Depends(authMiddleware)):
     try:
         holidays = await get_existing_journeys(user_id)
         return {"holidays": holidays}
@@ -13,18 +13,21 @@ async def getHolidays(user_id: int =  Depends(authMiddleware)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 @journeyRouter.post("/add", status_code = status.HTTP_200_OK)
-async def addHolidays(body, user_id: int =  Depends(authMiddleware)):
+async def addJourney(body, user_id: int =  Depends(authMiddleware)):
     try:
-        if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
-            len(body.day_before_sent)==len(body.release_day_sent)):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Number of records not matching")
+        if (not body.journey_name) or body.journey_name is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Name is required")
+        
+        if (not body.journey_date) or body.journey_date is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Date is required")
+        
         holidays = await add_journey(body, user_id)
         return {"holidays": holidays}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 @journeyRouter.put("/update", status_code = status.HTTP_200_OK)
-async def updateHolidays(body, user_id: int =  Depends(authMiddleware)):
+async def updateJourney(body, user_id: int =  Depends(authMiddleware)):
     try:
         if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
             len(body.day_before_sent)==len(body.release_day_sent)):

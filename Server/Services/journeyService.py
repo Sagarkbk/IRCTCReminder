@@ -71,8 +71,9 @@ async def add_journey(body, user_id):
             async with conn.transaction():
                 new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, remind_on_release_day, remind_on_day_before, False, False, current_time)
 
-                records_to_insert = [(new_journey['id'], date, False) for date in custom_dates]
-                await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
+                if custom_dates:
+                    records_to_insert = [(new_journey['id'], date, False) for date in custom_dates]
+                    await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
 
                 journey_id = new_journey['id']
 
