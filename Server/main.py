@@ -5,6 +5,7 @@ from Routes.user import userRouter
 from Routes.journey import journeyRouter
 from Routes.integration import integrationRouter
 from Routes.telegram import telegramRouter
+from Routes.health import healthRouter
 from Telegram_Bot.bot import bot_initialization
 from contextlib import asynccontextmanager
 from fastapi_limiter import FastAPILimiter
@@ -44,3 +45,4 @@ app.include_router(userRouter, prefix="/api")
 app.include_router(journeyRouter, prefix="/api")
 app.include_router(integrationRouter, prefix="/api")
 app.include_router(telegramRouter, prefix="/api")
+app.include_router(healthRouter, prefix="/api")
