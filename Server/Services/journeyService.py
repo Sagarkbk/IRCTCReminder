@@ -39,7 +39,7 @@ async def get_existing_journeys(user_id):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def add_journeys(body, user_id):
+async def add_journey(body, user_id):
     try:
         journey = None
         journey_id = None
@@ -81,7 +81,7 @@ async def add_journeys(body, user_id):
     except Exception as e:
         raise
 
-async def update_journeys(body, journey_id):
+async def update_journey(body, journey_id):
     try:
         async with get_db_connection() as conn:
             get_query = """
@@ -186,5 +186,30 @@ async def get_journey_by_id(journey_id):
 
             journey['custom_reminders'] = custom_reminders
             return journey
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+
+async def delete_journey_by_id(user_id, journey_id):
+    try:
+        async with get_db_connection() as conn:
+            async with conn.transaction():
+                select_query = "SELECT user_id from journeys WHERE id = $1"
+                journey = await conn.fetchrow(select_query, journey_id)
+
+                if not journey:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
+                
+                if journey['user_id'] != user_id:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
+
+                delete_query = "DELETE FROM journeys WHERE id = $1 and user_id = $2"
+
+                result = await conn.execute(delete_query, journey_id, user_id)
+
+                if result == "DELETE 0":
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found or deleted already")
+
+                journeys = await get_existing_journeys(user_id)
+                return journeys
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
