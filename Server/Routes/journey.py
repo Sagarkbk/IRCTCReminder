@@ -21,6 +21,9 @@ async def addJourney(body, user_id: int =  Depends(authMiddleware)):
         if (not body.journey_date) or body.journey_date is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Date is required")
         
+        if not body.remind_on_release_day or not body.remind_on_day_before:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User has selected for reminders on release day and/or the day before release is required")
+        
         holidays = await add_journey(body, user_id)
         return {"holidays": holidays}
     except Exception as e:
@@ -32,6 +35,7 @@ async def updateJourney(body, user_id: int =  Depends(authMiddleware)):
         if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
             len(body.day_before_sent)==len(body.release_day_sent)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Number of records not matching")
+        
         holidays = await update_journey(body, user_id)
         return {"holidays": holidays}
     except Exception as e:

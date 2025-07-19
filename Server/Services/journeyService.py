@@ -55,24 +55,12 @@ async def add_journey(body, user_id):
             current_time = pendulum.now('UTC')
             release_day_date = pendulum.parse(body.journey_date).date().subtract(days=60)
             day_before_release_date = release_day_date.subtract(days=1)
-            remind_on_release_day = False
-            remind_on_day_before = False
-            custom_dates = []
-
-            for reminder_date in body.reminder_dates:
-                reminder_date = pendulum.parse(reminder_date).date()
-                if reminder_date == release_day_date:
-                    remind_on_release_day = True
-                elif reminder_date == day_before_release_date:
-                    remind_on_day_before = True
-                else:
-                    custom_dates.append(reminder_date)
 
             async with conn.transaction():
-                new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, remind_on_release_day, remind_on_day_before, False, False, current_time)
+                new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.remind_on_release_day, body.remind_on_day_before, False, False, current_time)
 
-                if custom_dates:
-                    records_to_insert = [(new_journey['id'], date, False) for date in custom_dates]
+                if body.custom_dates:
+                    records_to_insert = [(new_journey['id'], date, False) for date in body.custom_dates]
                     await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date', 'is_sent'], records = records_to_insert)
 
                 journey_id = new_journey['id']
