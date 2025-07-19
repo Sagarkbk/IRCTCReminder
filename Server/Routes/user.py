@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from Middlewares.middlewares import authMiddleware
 from Services.userService import get_user_by_id, update_user_settings
 from fastapi_limiter.depends import RateLimiter
+from Services.redisService import get_redis
+from redis.asyncio import Redis
 
 userRouter = APIRouter(prefix="/user")
 
 @userRouter.get("/profile", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=30, seconds=60))])
-async def getProfile(user_id: int = Depends(authMiddleware)):
+async def getProfile(user_id: int = Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        user = await get_user_by_id(user_id)
+        user = await get_user_by_id(user_id, rds)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         return user

@@ -1,6 +1,7 @@
 from Database.connection import get_db_connection
 import pendulum
 from fastapi import HTTPException, status
+import json
 
 async def create_user(userInfo):
     try:
@@ -21,14 +22,33 @@ async def create_user(userInfo):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def get_user_by_id(user_id):
+async def get_user_by_id(user_id, rds=None):
     try:
+        if rds:
+            try:
+                cache_key = f"user:{user_id}"
+                cached_user = await rds.get(cache_key)
+                if cached_user:
+                    print(f"User {user_id} cache exists")
+                    return json.loads(cached_user)
+            except Exception as e:
+                print(f"Redis error: {e}")
+            
+
         async with get_db_connection() as conn:
             query = """
                     SELECT * FROM users WHERE id = $1
                     """
             existingUser = await conn.fetchrow(query, user_id)
-            return dict(existingUser) if existingUser else None
+            user = dict(existingUser) if existingUser else None
+
+            if rds and user:
+                try:
+                    await rds.setex(f"user:{user_id}", 900, json.dumps(user, default=str))
+                except Exception as e:
+                    print(f"Failed to cache user {user_id}: {e}")
+
+            return user
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
