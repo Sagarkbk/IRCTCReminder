@@ -32,10 +32,15 @@ async def addJourney(body, user_id: int =  Depends(authMiddleware)):
 @journeyRouter.put("/update", status_code = status.HTTP_200_OK)
 async def updateJourney(body, user_id: int =  Depends(authMiddleware)):
     try:
-        if not(len(body.holiday_name)==len(body.holiday_date)==len(body.category)==
-            len(body.day_before_sent)==len(body.release_day_sent)):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Number of records not matching")
+        if (not body.journey_name) or body.journey_name is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Name is required")
         
+        if (not body.journey_date) or body.journey_date is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Date is required")
+        
+        if not body.remind_on_release_day or not body.remind_on_day_before:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User has selected for reminders on release day and/or the day before release is required")
+                
         holidays = await update_journey(body, user_id)
         return {"holidays": holidays}
     except Exception as e:

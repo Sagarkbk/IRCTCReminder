@@ -86,14 +86,8 @@ async def update_journey(body, journey_id):
             if not records:
                 return None        
             
-            reminder_on_release_day = records[0]['reminder_on_release_day']
-            reminder_on_day_before = records[0]['reminder_on_day_before']
             journey_name = records[0]['journey_name']
 
-            if body.reminder_on_release_day is not None:
-                reminder_on_release_day = body.reminder_on_release_day
-            if body.reminder_on_day_before is not None:
-                reminder_on_day_before = body.reminder_on_day_before
             if body.journey_name is not None:
                 journey_name = body.journey_name
             
@@ -105,7 +99,7 @@ async def update_journey(body, journey_id):
                                         journey_name = $3
                                         WHERE id = $4
                                     """
-                await conn.execute(update_journey_query, reminder_on_release_day, reminder_on_day_before, journey_name, journey_id)
+                await conn.execute(update_journey_query, body.reminder_on_release_day, body.reminder_on_day_before, journey_name, journey_id)
 
                 existing_custom_reminders = [record['reminder_date'] for record in records]
                 reminders_to_be_deleted = []
