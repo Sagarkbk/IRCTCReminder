@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends, HTTPException
 from Services.journeyService import get_existing_journeys, add_journey, update_journey, delete_journey_by_id
 from Middlewares.middlewares import authMiddleware
 
-journeyRouter = APIRouter(prefix="/holiday")
+journeyRouter = APIRouter(prefix="/journey")
 
 @journeyRouter.get("/existing", status_code = status.HTTP_200_OK)
 async def getJourneys(user_id: int =  Depends(authMiddleware)):

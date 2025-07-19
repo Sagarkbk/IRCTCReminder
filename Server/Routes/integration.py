@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from Middlewares.middlewares import authMiddleware
 from Services.integrationService import generateLinkingToken, linkTelegramAccount, validateTokenAndGetUser
 
-integrationRouter = APIRouter(prefix="/user")
+integrationRouter = APIRouter(prefix="/integration")
 
 @integrationRouter.post("/telegram/generateToken", status_code = status.HTTP_201_CREATED)
 async def generateToken(user_id: int = Depends(authMiddleware)):
@@ -15,6 +15,8 @@ async def generateToken(user_id: int = Depends(authMiddleware)):
 @integrationRouter.put("/telegram/linkAccount", status_code = status.HTTP_200_OK)
 async def linkAccount(body):
     try:
+        if (body.telegram_id is None) or (body.telegram_username is None) or (body.token is None):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram ID/Telegram Name/Token are/is missing")
         user = await validateTokenAndGetUser(body.token)
         if user['telegram_id']:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your Google and Telegram accounts are already linked.")

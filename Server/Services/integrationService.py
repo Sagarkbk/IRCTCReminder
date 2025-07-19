@@ -7,6 +7,10 @@ from fastapi import HTTPException, status
 async def generateLinkingToken(user_id):
     try:
         async with get_db_connection() as conn:
+            user = await get_user_by_id(user_id)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exists")
+            
             token = secrets.token_urlsafe(32)
             query = """
                     INSERT INTO google_telegram_link (user_id, token, expires_at)
@@ -39,11 +43,11 @@ async def linkTelegramAccount(body, user_id, token):
                                 WHERE user_id = $2 AND token = $3
                                 """
             current_time = pendulum.now('UTC')
-            user = None
-            async with await conn.transaction() as trsc:
-                user = await trsc.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
-                await trsc.execute(update_token_query, True, user_id, token)
-            return user
+            
+            async with conn.transaction():
+                user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
+                await conn.execute(update_token_query, True, user_id, token)
+                return user
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 

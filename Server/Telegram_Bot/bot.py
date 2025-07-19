@@ -12,9 +12,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Do you want to Enable Reminders?",
             reply_markup=InlineKeyboardMarkup(options)
         )
-        print("Inside start")
     except Exception as e:
-        print(f"Exception in /start: {e}")
+        await update.message.reply_text("An error occurred. Please try again later.")
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -26,9 +25,8 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Do you want to Disable Reminders?",
             reply_markup=InlineKeyboardMarkup(options)
         )
-        print("Inside stop")
     except Exception as e:
-        print(f"Exception in /stop: {e}")
+        await update.message.reply_text("An error occurred. Please try again later.")
 
 async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -45,13 +43,11 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await query.edit_message_text("✅ Reminders are Disabled! Use /start to enable reminders")
                 elif query.data == "do_not_disable":
                     await query.edit_message_text("❌ Reminders are not Disabled! Use /stop to disable reminders")
-        print("Inside commandHandler")
     except Exception as e:
-        print(f"Exception in /commandHandler: {e}")
+        await update.message.reply_text("An error occurred. Please try again later.")
 
 def bot_initialization():
     TOKEN = os.getenv("TOKEN")
-    DATABASE_URl=os.getenv("DATABASE_URL")
     if not TOKEN:
         raise ValueError("Telegram bot token not found in environment variables.")
     app = Application.builder().token(TOKEN).build()
