@@ -5,6 +5,7 @@ import secrets
 from fastapi import HTTPException, status, Depends
 from Services.redisService import get_redis
 from redis.asyncio import Redis
+import json
 
 async def generateLinkingToken(user_id, rds=None):
     try:
@@ -34,6 +35,16 @@ async def generateLinkingToken(user_id, rds=None):
 async def linkTelegramAccount(body, user_id, token, rds=None):
     try:
         async with get_db_connection() as conn:
+            if rds:
+                try:
+                    cached_user = await rds.get(f"user:{user_id}")
+                    if cached_user:
+                        await rds.delete(f"user:{user_id}")
+                    else:
+                        print(f"There is no cache user:{user_id} to be deleted")
+                except Exception as e:
+                    print(f"Failed to delete cache user:{user_id}: {e}")
+
             existingUser = await get_user_by_id(user_id, rds)
             if existingUser is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -55,7 +66,14 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
             async with conn.transaction():
                 user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
                 await conn.execute(update_token_query, True, user_id, token)
-                return user
+
+                if rds and user:
+                    try:
+                        await rds.setex(f"user:{user_id}", 900, json.dumps(dict(user), default=str))
+                    except Exception as e:
+                        print(f"Failed to cache user:{user_id}: {e}")
+                        
+                return dict(user)
     except HTTPException:
         raise
     except Exception:
