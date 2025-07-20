@@ -4,6 +4,7 @@ from Services.integrationService import generateLinkingToken, linkTelegramAccoun
 from fastapi_limiter.depends import RateLimiter
 from Services.redisService import get_redis
 from redis.asyncio import Redis
+from Models.telegramModel import TelegramLinkInput
 
 integrationRouter = APIRouter(prefix="/integration")
 
@@ -18,10 +19,8 @@ async def generateToken(user_id: int = Depends(authMiddleware), rds: Redis = Dep
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @integrationRouter.put("/telegram/linkAccount", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
-async def linkAccount(body, rds: Redis = Depends(get_redis)):
+async def linkAccount(body: TelegramLinkInput, rds: Redis = Depends(get_redis)):
     try:
-        if (body.telegram_id is None) or (body.telegram_username is None) or (body.token is None):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Telegram ID/Telegram Name/Token are/is missing")
         user = await validateTokenAndGetUser(body.token, rds)
         if user['telegram_id']:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your Google and Telegram accounts are already linked.")

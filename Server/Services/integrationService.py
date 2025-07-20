@@ -79,9 +79,6 @@ async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
             user_id = token_data['user_id']
 
             user = await get_user_by_id(user_id, rds)
-            if user is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
             return user
     except HTTPException:
         raise

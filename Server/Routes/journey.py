@@ -4,6 +4,7 @@ from Middlewares.middlewares import authMiddleware
 from fastapi_limiter.depends import RateLimiter
 from Services.redisService import get_redis
 from redis.asyncio import Redis
+from Models.journeyModel import JourneyInput
 
 journeyRouter = APIRouter(prefix="/journey")
 
@@ -18,17 +19,8 @@ async def getJourneys(user_id: int =  Depends(authMiddleware), rds: Redis = Depe
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.post("/add", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
-async def addJourney(body, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
-    try:
-        if (not body.journey_name) or body.journey_name is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Name is required")
-        
-        if (not body.journey_date) or body.journey_date is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Date is required")
-        
-        if (body.remind_on_release_day is None) or (body.remind_on_day_before is None):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reminder preferences for release day and day before release are required")
-        
+async def addJourney(body: JourneyInput, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
+    try:        
         journey = await add_journey(body, user_id, rds)
         return {"data": journey}
     except HTTPException:
@@ -37,17 +29,8 @@ async def addJourney(body, user_id: int =  Depends(authMiddleware), rds: Redis =
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.put("/update", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
-async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
+async def updateJourney(body: JourneyInput, journey_id: int, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        if (not body.journey_name) or body.journey_name is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Name is required")
-        
-        if (not body.journey_date) or body.journey_date is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Journey Date is required")
-        
-        if (body.remind_on_release_day is None) or (body.remind_on_day_before is None):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reminder preferences for release day and day before release are required")
-                
         journey = await update_journey(body, user_id, journey_id, rds)
         return {"data": journey}
     except HTTPException:
@@ -56,7 +39,7 @@ async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 @journeyRouter.delete("/delete", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
-async def deleteJourney(journey_id, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
+async def deleteJourney(journey_id: int, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
         journeys = await delete_journey_by_id(user_id, journey_id, rds)
         return {"data": journeys}
