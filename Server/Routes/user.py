@@ -11,16 +11,18 @@ userRouter = APIRouter(prefix="/user")
 async def getProfile(user_id: int = Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
         user = await get_user_by_id(user_id, rds)
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        return {"data" : user}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @userRouter.put("/preferences", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def updateProfile(body, user_id: int = Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
         user = await update_user_settings(user_id, body, rds)
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        return {"data" : user}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

@@ -25,8 +25,10 @@ async def userVerification(body, rds=None):
         newUser = await create_user(userInfo)
         jwt_token = createJwtToken(newUser)
         return {"existingUser": False, "user": newUser, "token": jwt_token}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 def createJwtToken(user):
     try:
@@ -38,5 +40,7 @@ def createJwtToken(user):
                             algorithm="HS256"
                         )
         return jwt_token
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

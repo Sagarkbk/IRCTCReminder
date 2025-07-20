@@ -6,12 +6,12 @@ from fastapi import HTTPException, status, Depends
 from Services.redisService import get_redis
 from redis.asyncio import Redis
 
-async def generateLinkingToken(user_id, rds: Redis = Depends(get_redis)):
+async def generateLinkingToken(user_id, rds=None):
     try:
         async with get_db_connection() as conn:
             user = await get_user_by_id(user_id, rds)
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exists")
+            if user is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
             
             token = secrets.token_urlsafe(32)
             query = """
@@ -26,12 +26,18 @@ async def generateLinkingToken(user_id, rds: Redis = Depends(get_redis)):
                 expires_at
             )
             return token
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def linkTelegramAccount(body, user_id, token):
+async def linkTelegramAccount(body, user_id, token, rds=None):
     try:
         async with get_db_connection() as conn:
+            existingUser = await get_user_by_id(user_id, rds)
+            if existingUser is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            
             update_user_query = """
                     UPDATE users SET telegram_id = $1,
                     telegram_username = $2,
@@ -50,8 +56,10 @@ async def linkTelegramAccount(body, user_id, token):
                 user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
                 await conn.execute(update_token_query, True, user_id, token)
                 return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
     try:
@@ -59,7 +67,7 @@ async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
             token_query = "SELECT * FROM google_telegram_link WHERE token = $1"
             token_data = await conn.fetchrow(token_query, token)
 
-            if not token_data:
+            if token_data is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token.")
             
             if token_data['is_used']:
@@ -71,9 +79,11 @@ async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
             user_id = token_data['user_id']
 
             user = await get_user_by_id(user_id, rds)
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User associated with this token does not exists.")
+            if user is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
             return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

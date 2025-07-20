@@ -48,14 +48,16 @@ async def get_existing_journeys(user_id, rds=None):
 
             if rds and journeys:
                 try:
-                    await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(dict(journeys), default=str))
+                    await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys), default=str)
                     print(f"Cached journeys:user:{user_id}")
                 except Exception as e:
                     print(f"Failed to cache journeys:user:{user_id}: {e}")
 
-            return dict(journeys)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+            return journeys
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def add_journey(body, user_id, rds=None):
     try:
@@ -96,8 +98,10 @@ async def add_journey(body, user_id, rds=None):
 
         journey = await get_journey_by_id(user_id, journey_id)
         return journey
-    except Exception as e:
+    except HTTPException:
         raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def update_journey(body, user_id, journey_id, rds=None):
     try:
@@ -123,8 +127,10 @@ async def update_journey(body, user_id, journey_id, rds=None):
                 """
             
             records = await conn.fetch(get_query, user_id, journey_id)
-            if not records:
-                return None        
+            if records is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
+            if records['user_id'] != user_id:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
             
             journey_name = records[0]['journey_name']
 
@@ -163,9 +169,10 @@ async def update_journey(body, user_id, journey_id, rds=None):
 
         journey = await get_journey_by_id(user_id, journey_id)
         return journey
-
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def delete_journey_by_id(user_id, journey_id, rds=None):
     try:
@@ -185,7 +192,7 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
                 select_query = "SELECT user_id from journeys WHERE id = $1"
                 journey = await conn.fetchrow(select_query, journey_id)
 
-                if not journey:
+                if journey is None:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
                 
                 if journey['user_id'] != user_id:
@@ -202,14 +209,16 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
 
                 if rds and journeys:
                     try:
-                        await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(dict(journeys), default=str))
+                        await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys), default=str)
                         print(f"Cached journeys:user:{user_id}")
                     except Exception as e:
                         print(f"Failed to cache journeys:user:{user_id}: {e}")
 
                 return journeys
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_journey_by_id(user_id, journey_id):
     try:
@@ -225,7 +234,7 @@ async def get_journey_by_id(user_id, journey_id):
             
             records = await conn.fetch(query, user_id, journey_id)
             if not records:
-                return None
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
             
             journey = {}
             custom_reminders = []
@@ -253,5 +262,7 @@ async def get_journey_by_id(user_id, journey_id):
 
             journey['custom_reminders'] = custom_reminders
             return journey
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

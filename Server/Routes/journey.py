@@ -10,10 +10,12 @@ journeyRouter = APIRouter(prefix="/journey")
 @journeyRouter.get("/existing", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=60, seconds=60))])
 async def getJourneys(user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        holidays = await get_existing_journeys(user_id, rds)
-        return {"holidays": holidays}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        journeys = await get_existing_journeys(user_id, rds)
+        return {"data": journeys}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.post("/add", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def addJourney(body, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
@@ -27,10 +29,12 @@ async def addJourney(body, user_id: int =  Depends(authMiddleware), rds: Redis =
         if (body.remind_on_release_day is None) or (body.remind_on_day_before is None):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reminder preferences for release day and day before release are required")
         
-        holidays = await add_journey(body, user_id, rds)
-        return {"holidays": holidays}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        journey = await add_journey(body, user_id, rds)
+        return {"data": journey}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.put("/update", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
@@ -44,15 +48,19 @@ async def updateJourney(body, journey_id, user_id: int =  Depends(authMiddleware
         if (body.remind_on_release_day is None) or (body.remind_on_day_before is None):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reminder preferences for release day and day before release are required")
                 
-        holidays = await update_journey(body, user_id, journey_id, rds)
-        return {"holidays": holidays}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        journey = await update_journey(body, user_id, journey_id, rds)
+        return {"data": journey}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 @journeyRouter.delete("/delete", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def deleteJourney(journey_id, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        holidays = await delete_journey_by_id(user_id, journey_id, rds)
-        return {"holidays": holidays}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        journeys = await delete_journey_by_id(user_id, journey_id, rds)
+        return {"data": journeys}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

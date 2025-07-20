@@ -22,6 +22,6 @@ async def googleAuth(body, response: Response, rds: Redis = Depends(get_redis)):
         if result['existingUser']:
             response.status_code = status.HTTP_200_OK
         
-        return {"user": result['user'], "token": result['token']}
+        return {"data" : {"user": result['user'], "token": result['token']}}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

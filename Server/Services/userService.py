@@ -21,8 +21,10 @@ async def create_user(userInfo):
                                         pendulum.now('UTC')
                                     )
             return dict(result)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_user_by_id(user_id, rds=None):
     try:
@@ -42,17 +44,20 @@ async def get_user_by_id(user_id, rds=None):
                     SELECT * FROM users WHERE id = $1
                     """
             existingUser = await conn.fetchrow(query, user_id)
-            user = dict(existingUser) if existingUser else None
+            if existingUser is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-            if rds and user:
+            if rds and existingUser:
                 try:
-                    await rds.setex(f"user:{user_id}", 900, json.dumps(user, default=str))
+                    await rds.setex(f"user:{user_id}", 900, json.dumps(dict(existingUser), default=str))
                 except Exception as e:
                     print(f"Failed to cache user:{user_id}: {e}")
 
-            return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+            return dict(existingUser)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_user_by_google_id(google_id):
     try:
@@ -61,9 +66,14 @@ async def get_user_by_google_id(google_id):
                     SELECT * FROM users WHERE google_id = $1
                     """
             existingUser = await conn.fetchrow(query, google_id)
-            return dict(existingUser) if existingUser else None
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+            if existingUser is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+            return dict(existingUser)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def update_user(userInfo, user_id, rds=None):
     try:
@@ -98,15 +108,17 @@ async def update_user(userInfo, user_id, rds=None):
                 print(f"Failed to cache user:{user_id}: {e}")
             
             return dict(result)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
     try:
         async with get_db_connection() as conn:
             user = await get_user_by_id(user_id, rds)
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+            if user is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
             
             if rds:
                 try:
@@ -139,5 +151,7 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                 print(f"Failed to cache user:{user_id}: {e}")
 
             return dict(updated_user)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
