@@ -1,10 +1,21 @@
 from Database.connection import get_db_connection
 import pendulum
 from fastapi import HTTPException, status
+from redis.asyncio import Redis
+import json
 
-async def get_existing_journeys(user_id):
+async def get_existing_journeys(user_id, rds=None):
     try:
         async with get_db_connection() as conn:
+            if rds:
+                try:
+                    cache_key = f"journeys:user:{user_id}"
+                    cached_journeys = await rds.get(cache_key)
+                    if cached_journeys:
+                        print(f"journeys:user:{user_id} cache exists")
+                        return json.loads(cached_journeys)
+                except Exception as e:
+                    print(f"Redis error: {e}")
 
             journeys_query = """
                     SELECT * FROM journeys WHERE user_id = $1
@@ -35,12 +46,30 @@ async def get_existing_journeys(user_id):
                 journey_dict['custom_reminders'] = reminders_map.get(journey['id'], [])
                 journeys.append(journey_dict)
 
-            return journeys
+            if rds and journeys:
+                try:
+                    await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(dict(journeys), default=str))
+                    print(f"Cached journeys:user:{user_id}")
+                except Exception as e:
+                    print(f"Failed to cache journeys:user:{user_id}: {e}")
+
+            return dict(journeys)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def add_journey(body, user_id):
+async def add_journey(body, user_id, rds=None):
     try:
+        if rds:
+            try:
+                cached_journeys = await rds.get(f"journeys:user:{user_id}")
+                if cached_journeys:
+                    await rds.delete(f"journeys:user:{user_id}")
+                    print(f"Cache journeys:user:{user_id} is deleted")
+                else:
+                    print(f"There is no cache journeys:user:{user_id} to be deleted")
+            except Exception as e:
+                print(f"Failed to delete cache journeys:user:{user_id}: {e}")
+
         journey = None
         journey_id = None
         async with get_db_connection() as conn:
@@ -70,9 +99,20 @@ async def add_journey(body, user_id):
     except Exception as e:
         raise
 
-async def update_journey(body, user_id, journey_id):
+async def update_journey(body, user_id, journey_id, rds=None):
     try:
         async with get_db_connection() as conn:
+            if rds:
+                try:
+                    cached_journeys = await rds.get(f"journeys:user:{user_id}")
+                    if cached_journeys:
+                        await rds.delete(f"journeys:user:{user_id}")
+                        print(f"Cache journeys:user:{user_id} is deleted")
+                    else:
+                        print(f"There is no cache journeys:user:{user_id} to be deleted")
+                except Exception as e:
+                    print(f"Failed to delete cache journeys:user:{user_id}: {e}")
+
             get_query = """
                     SELECT j.id as journey_id, j.journey_name, j.release_day_date,
                     j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
@@ -126,6 +166,50 @@ async def update_journey(body, user_id, journey_id):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+    
+async def delete_journey_by_id(user_id, journey_id, rds=None):
+    try:
+        async with get_db_connection() as conn:
+            if rds:
+                try:
+                    cached_journeys = await rds.get(f"journeys:user:{user_id}")
+                    if cached_journeys:
+                        await rds.delete(f"journeys:user:{user_id}")
+                        print(f"Cache journeys:user:{user_id} is deleted")
+                    else:
+                        print(f"There is no cache journeys:user:{user_id} to be deleted")
+                except Exception as e:
+                    print(f"Failed to delete cache journeys:user:{user_id}: {e}")
+
+            async with conn.transaction():
+                select_query = "SELECT user_id from journeys WHERE id = $1"
+                journey = await conn.fetchrow(select_query, journey_id)
+
+                if not journey:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
+                
+                if journey['user_id'] != user_id:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
+
+                delete_query = "DELETE FROM journeys WHERE id = $1 and user_id = $2"
+
+                result = await conn.execute(delete_query, journey_id, user_id)
+
+                if result == "DELETE 0":
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found or deleted already")
+
+                journeys = await get_existing_journeys(user_id)
+
+                if rds and journeys:
+                    try:
+                        await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(dict(journeys), default=str))
+                        print(f"Cached journeys:user:{user_id}")
+                    except Exception as e:
+                        print(f"Failed to cache journeys:user:{user_id}: {e}")
+
+                return journeys
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 async def get_journey_by_id(user_id, journey_id):
     try:
@@ -169,30 +253,5 @@ async def get_journey_by_id(user_id, journey_id):
 
             journey['custom_reminders'] = custom_reminders
             return journey
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
-
-async def delete_journey_by_id(user_id, journey_id):
-    try:
-        async with get_db_connection() as conn:
-            async with conn.transaction():
-                select_query = "SELECT user_id from journeys WHERE id = $1"
-                journey = await conn.fetchrow(select_query, journey_id)
-
-                if not journey:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
-                
-                if journey['user_id'] != user_id:
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
-
-                delete_query = "DELETE FROM journeys WHERE id = $1 and user_id = $2"
-
-                result = await conn.execute(delete_query, journey_id, user_id)
-
-                if result == "DELETE 0":
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found or deleted already")
-
-                journeys = await get_existing_journeys(user_id)
-                return journeys
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
