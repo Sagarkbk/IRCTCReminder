@@ -3,20 +3,22 @@ from google.auth.transport.requests import Request
 import os
 from .userService import create_user, get_user_by_google_id, update_user
 import jwt
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, Depends
 import pendulum
+from redis.asyncio import Redis
+from Services.redisService import get_redis
 
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 JWT_SECRET = os.getenv("JWT_SECRET")
 
-async def userVerification(body):
+async def userVerification(body, rds=None):
     try:
         userInfo = id_token.verify_oauth2_token(body.idToken, Request(), WEB_CLIENT_ID)
 
-        existingUser = await get_user_by_google_id(userInfo.get('sub'))
+        existingUser = await get_user_by_google_id(userInfo.get('sub'), rds)
 
         if existingUser:
-            updatedUser = await update_user(userInfo, existingUser['id'])
+            updatedUser = await update_user(userInfo, existingUser['id'], rds)
             jwt_token = createJwtToken(updatedUser)
             return {"existingUser": True, "user": updatedUser, "token": jwt_token}
         

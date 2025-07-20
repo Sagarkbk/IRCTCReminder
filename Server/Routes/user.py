@@ -18,9 +18,9 @@ async def getProfile(user_id: int = Depends(authMiddleware), rds: Redis = Depend
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
 @userRouter.put("/preferences", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
-async def updateProfile(body, user_id: int = Depends(authMiddleware)):
+async def updateProfile(body, user_id: int = Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        user = await update_user_settings(user_id, body)
+        user = await update_user_settings(user_id, body, rds)
         return user
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)

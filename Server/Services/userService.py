@@ -31,7 +31,7 @@ async def get_user_by_id(user_id, rds=None):
                 cache_key = f"user:{user_id}"
                 cached_user = await rds.get(cache_key)
                 if cached_user:
-                    print(f"User {user_id} cache exists")
+                    print(f"user:{user_id} cache exists")
                     return json.loads(cached_user)
             except Exception as e:
                 print(f"Redis error: {e}")
@@ -48,7 +48,7 @@ async def get_user_by_id(user_id, rds=None):
                 try:
                     await rds.setex(f"user:{user_id}", 900, json.dumps(user, default=str))
                 except Exception as e:
-                    print(f"Failed to cache user {user_id}: {e}")
+                    print(f"Failed to cache user:{user_id}: {e}")
 
             return user
     except Exception as e:
@@ -65,7 +65,7 @@ async def get_user_by_google_id(google_id):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
 
-async def update_user(userInfo, user_id):
+async def update_user(userInfo, user_id, rds=None):
     try:
         async with get_db_connection() as conn:
             query = """
@@ -74,6 +74,16 @@ async def update_user(userInfo, user_id):
                     WHERE id = $4
                     RETURNING *
                     """
+            if rds:
+                try:
+                    cached_user = await rds.get(f"user:{user_id}")
+                    if cached_user:
+                        await rds.delete(f"user:{user_id}")
+                    else:
+                        print(f"There is no cache user:{user_id} to be deleted")
+                except Exception as e:
+                    print(f"Failed to delete cache user:{user_id}: {e}")
+
             result = await conn.fetchrow(
                                         query, 
                                         userInfo.get('email'), 
@@ -81,6 +91,12 @@ async def update_user(userInfo, user_id):
                                         pendulum.now('UTC'), 
                                         user_id
                                     )
+            
+            try:
+                await rds.setex(f"user:{user_id}", 900, json.dumps(dict(result), default=str))
+            except Exception as e:
+                print(f"Failed to cache user:{user_id}: {e}")
+            
             return dict(result)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
@@ -91,6 +107,17 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
             user = await get_user_by_id(user_id, rds)
             if not user:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+            
+            if rds:
+                try:
+                    cached_user = await rds.get(f"user:{user_id}")
+                    if cached_user:
+                        await rds.delete(f"user:{user_id}")
+                    else:
+                        print(f"There is no cache user:{user_id} to be deleted")
+                except Exception as e:
+                    print(f"Failed to delete cache user:{user_id}: {e}")
+
             calendar_enabled = user['calendar_enabled']
             telegram_enabled = user['telegram_enabled']
             if body.calendar_enabled is not None:
@@ -105,6 +132,12 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                     """
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)
-            return updated_user
+            
+            try:
+                await rds.setex(f"user:{user_id}", 900, json.dumps(dict(updated_user), default=str))
+            except Exception as e:
+                print(f"Failed to cache user:{user_id}: {e}")
+
+            return dict(updated_user)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
