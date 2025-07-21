@@ -5,19 +5,20 @@ import json
 from Services.redisService import get_redis
 from redis.asyncio import Redis
 
-async def create_user(userInfo):
+async def create_user(userInfo, google_refresh_token):
     try:
         async with get_db_connection() as conn:
             query = """
-                    INSERT INTO users (google_id, email, username, last_updated_at) 
-                    VALUES ($1, $2, $3, $4) 
+                    INSERT INTO users (google_id, email, username, google_refresh_token, last_updated_at) 
+                    VALUES ($1, $2, $3, $4, $5) 
                     RETURNING *
                     """
             result = await conn.fetchrow(
                                         query, 
                                         userInfo.get('sub'), 
                                         userInfo.get('email'), 
-                                        userInfo.get('name'), 
+                                        userInfo.get('name'),
+                                        google_refresh_token,
                                         pendulum.now('UTC')
                                     )
             return dict(result)
@@ -75,13 +76,13 @@ async def get_user_by_google_id(google_id):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def update_user(userInfo, user_id, rds=None):
+async def update_user(userInfo, user_id, google_refresh_token, rds=None):
     try:
         async with get_db_connection() as conn:
             query = """
                     UPDATE users 
-                    SET email = $1, username = $2, last_updated_at = $3
-                    WHERE id = $4
+                    SET email = $1, username = $2, google_refresh_token = $3, last_updated_at = $4
+                    WHERE id = $5
                     RETURNING *
                     """
             if rds:
@@ -96,9 +97,10 @@ async def update_user(userInfo, user_id, rds=None):
 
             result = await conn.fetchrow(
                                         query, 
-                                        userInfo.get('email'), 
-                                        userInfo.get('name'), 
-                                        pendulum.now('UTC'), 
+                                        userInfo.get('email'),
+                                        userInfo.get('name'),
+                                        google_refresh_token,
+                                        pendulum.now('UTC'),
                                         user_id
                                     )
             

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
 
 class GoogleAuth(BaseModel):
-    idToken : str
+    authCode : str
     clientId: str
