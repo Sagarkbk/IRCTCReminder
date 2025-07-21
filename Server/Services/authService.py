@@ -15,7 +15,7 @@ async def userVerification(body, rds=None):
     try:
         userInfo = id_token.verify_oauth2_token(body.idToken, Request(), WEB_CLIENT_ID)
 
-        existingUser = await get_user_by_google_id(userInfo.get('sub'), rds)
+        existingUser = await get_user_by_google_id(userInfo.get('sub'))
 
         if existingUser:
             updatedUser = await update_user(userInfo, existingUser['id'], rds)

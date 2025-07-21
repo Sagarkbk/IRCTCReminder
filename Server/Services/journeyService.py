@@ -118,7 +118,7 @@ async def update_journey(body, user_id, journey_id, rds=None):
                     print(f"Failed to delete cache journeys:user:{user_id}: {e}")
 
             get_query = """
-                    SELECT j.id as journey_id, j.journey_name, j.release_day_date,
+                    SELECT j.user_id, j.id as journey_id, j.journey_name, j.release_day_date,
                     j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
                     cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date
                     FROM journeys j LEFT JOIN custom_reminders cr
@@ -127,9 +127,9 @@ async def update_journey(body, user_id, journey_id, rds=None):
                 """
             
             records = await conn.fetch(get_query, user_id, journey_id)
-            if records is None:
+            if not records:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
-            if records['user_id'] != user_id:
+            if records[0]['user_id'] != user_id:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
             
             journey_name = records[0]['journey_name']

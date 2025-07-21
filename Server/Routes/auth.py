@@ -4,7 +4,7 @@ from Services.authService import userVerification
 from fastapi_limiter.depends import RateLimiter
 from Services.redisService import get_redis
 from redis.asyncio import Redis
-from Server.Models.authModel import GoogleAuth
+from Models.authModel import GoogleAuth
 
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 

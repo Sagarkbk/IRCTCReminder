@@ -145,7 +145,7 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)
             
-            if rds and update_user:
+            if rds and updated_user:
                 try:
                     await rds.setex(f"user:{user_id}", 900, json.dumps(dict(updated_user), default=str))
                 except Exception as e:
