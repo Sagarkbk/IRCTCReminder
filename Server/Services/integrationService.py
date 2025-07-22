@@ -90,7 +90,7 @@ async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token.")
             
             if token_data['is_used']:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has already been used.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your token has already been used.")
 
             if token_data['expires_at'] < pendulum.now('UTC'):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has expired.")

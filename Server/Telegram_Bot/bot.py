@@ -2,10 +2,12 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler, Application
 import os
 from Services.userService import update_user_settings, get_user_by_telegram_id
+from Services.integrationService import validateTokenAndGetUser, linkTelegramAccount
 from Models.userModel import UserPreferencesInput
 from fastapi import HTTPException, Depends
 from Services.redisService import get_redis
 from redis.asyncio import Redis
+import httpx
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -30,6 +32,37 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Do you want to Disable Reminders?",
             reply_markup=InlineKeyboardMarkup(options)
         )
+    except Exception as e:
+        await update.message.reply_text("An error occurred. Please try again later.")
+
+async def link(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = Depends(get_redis)):
+    try:
+        if not context.args:
+            await update.message.reply_text("To link your account, please use the link provided on our website.")
+        
+        token = context.args[0]
+
+        try:
+            telegram_id = await update.message.from_user.id
+            telegram_username = await update.message.from_user.username
+            API_URL = os.getenv("API_URL")
+            payload = {
+                "token": token,
+                "telegram_id": telegram_id,
+                "telegram_username": telegram_username
+            }
+
+            async with httpx.AsyncClient() as client:
+                response = await client.put(
+                    f"{API_URL}/api/integration/telegram/linkAccount", 
+                    json=payload
+                    )
+                response.raise_for_status()
+                await update.message.reply_text("Success! Your telegram account is now linked.")
+        except httpx.HTTPStatusError as e:
+            await update.message.reply_text(e.response.json().get("detail"))
+        except httpx.RequestError:
+            await update.message.reply_text("An error occurred. Please try again later.")
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
@@ -69,5 +102,6 @@ def bot_initialization():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))
+    app.add_handler(CommandHandler("link", link))
     app.add_handler(CallbackQueryHandler(commandHandler))
     return app
