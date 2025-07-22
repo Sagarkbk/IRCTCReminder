@@ -5,7 +5,7 @@ import json
 from Services.redisService import get_redis
 from redis.asyncio import Redis
 
-async def create_user(userInfo, google_refresh_token):
+async def create_user(userInfo, google_refresh_token, rds=None):
     try:
         async with get_db_connection() as conn:
             query = """
@@ -21,6 +21,13 @@ async def create_user(userInfo, google_refresh_token):
                                         google_refresh_token,
                                         pendulum.now('UTC')
                                     )
+            
+            if rds and result:
+                try:
+                    await rds.setex(f"user:{result['id']}", 900, json.dumps(dict(result), default=str))
+                except Exception as e:
+                    print(f"Failed to cache user:{result['id']}: {e}")
+
             return dict(result)
     except HTTPException:
         raise
@@ -90,6 +97,12 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
                     cached_user = await rds.get(f"user:{user_id}")
                     if cached_user:
                         await rds.delete(f"user:{user_id}")
+                        if cached_user['telegram_id']:
+                            cached_telegram = await rds.get(f"user_telegram:{cached_user['telegram_id']}")
+                            if cached_telegram:
+                                await rds.delete(f"user_telegram:{cached_user['telegram_id']}")
+                            else:
+                                print(f"There is no cache user_telegram:{cached_user['telegram_id']} to be deleted")
                     else:
                         print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
@@ -106,6 +119,8 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
             
             try:
                 await rds.setex(f"user:{user_id}", 900, json.dumps(dict(result), default=str))
+                if result['telegram_id']:
+                    await rds.setex(f"user_telegram:{result['telegram_id']}", 900, json.dumps(dict(result), default=str))
             except Exception as e:
                 print(f"Failed to cache user:{user_id}: {e}")
             
@@ -127,6 +142,10 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                     cached_user = await rds.get(f"user:{user_id}")
                     if cached_user:
                         await rds.delete(f"user:{user_id}")
+                        if user.get('telegram_id'):
+                            cached_telegram = await rds.get(f"user_telegram:{user['telegram_id']}")
+                            if cached_telegram:
+                                await rds.delete(f"user_telegram:{user['telegram_id']}")
                     else:
                         print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
@@ -150,10 +169,45 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
             if rds and updated_user:
                 try:
                     await rds.setex(f"user:{user_id}", 900, json.dumps(dict(updated_user), default=str))
+                    if updated_user['telegram_id']:
+                        await rds.setex(f"user_telegram:{updated_user['telegram_id']}", 900, json.dumps(dict(updated_user), default=str))
                 except Exception as e:
                     print(f"Failed to cache user:{user_id}: {e}")
 
             return dict(updated_user)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+async def get_user_by_telegram_id(telegram_id, rds=None):
+    try:
+        if rds:
+            try:
+                cache_key = f"user_telegram:{telegram_id}"
+                cached_user = await rds.get(cache_key)
+                if cached_user:
+                    print(f"user_telegram:{telegram_id} cache exists")
+                    return json.loads(cached_user)
+            except Exception as e:
+                print(f"Redis error: {e}")
+            
+
+        async with get_db_connection() as conn:
+            query = """
+                    SELECT * FROM users WHERE telegram_id = $1
+                    """
+            existingUser = await conn.fetchrow(query, telegram_id)
+            if existingUser is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+            if rds and existingUser:
+                try:
+                    await rds.setex(f"user_telegram:{telegram_id}", 900, json.dumps(dict(existingUser), default=str))
+                except Exception as e:
+                    print(f"Failed to cache user_telegram:{telegram_id}: {e}")
+
+            return dict(existingUser)
     except HTTPException:
         raise
     except Exception:

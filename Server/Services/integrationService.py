@@ -35,19 +35,18 @@ async def generateLinkingToken(user_id, rds=None):
 async def linkTelegramAccount(body, user_id, token, rds=None):
     try:
         async with get_db_connection() as conn:
-            if rds:
-                try:
-                    cached_user = await rds.get(f"user:{user_id}")
-                    if cached_user:
-                        await rds.delete(f"user:{user_id}")
-                    else:
-                        print(f"There is no cache user:{user_id} to be deleted")
-                except Exception as e:
-                    print(f"Failed to delete cache user:{user_id}: {e}")
-
             existingUser = await get_user_by_id(user_id, rds)
             if existingUser is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            
+            if rds:
+                try:
+                    await rds.delete(f"user:{user_id}")
+                    if existingUser['telegram_id']:
+                        await rds.delete(f"user_telegram:{existingUser['telegram_id']}")
+                except Exception as e:
+                    print(f"Failed to delete cache user:{user_id}: {e}")
+
             
             update_user_query = """
                     UPDATE users SET telegram_id = $1,
@@ -70,6 +69,8 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
                 if rds and user:
                     try:
                         await rds.setex(f"user:{user_id}", 900, json.dumps(dict(user), default=str))
+                        if user['telegram_id']:
+                            await rds.setex(f"user_telegram:{user['telegram_id']}", 900, json.dumps(dict(user), default=str))
                     except Exception as e:
                         print(f"Failed to cache user:{user_id}: {e}")
                         

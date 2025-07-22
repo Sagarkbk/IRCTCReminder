@@ -47,7 +47,7 @@ async def userVerification(body, rds=None):
             return {"existingUser": True, "user": updatedUser, "token": jwt_token}
         except HTTPException as e:
             if e.status_code == 404:
-                newUser = await create_user(userInfo, google_refresh_token)
+                newUser = await create_user(userInfo, google_refresh_token, rds)
                 jwt_token = createJwtToken(newUser)
                 return {"existingUser": False, "user": newUser, "token": jwt_token}
             else:
