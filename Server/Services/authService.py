@@ -4,10 +4,8 @@ from google_auth_oauthlib.flow import Flow
 import os
 from .userService import create_user, get_user_by_google_id, update_user
 import jwt
-from fastapi import status, HTTPException, Depends
+from fastapi import status, HTTPException
 import pendulum
-from redis.asyncio import Redis
-from Services.redisService import get_redis
 
 WEB_CLIENT_ID = os.getenv("WEB_CLIENT_ID")
 WEB_CLIENT_SECRET = os.getenv("WEB_CLIENT_SECRET")
