@@ -2,7 +2,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler, Application
 import os
 from Services.userService import update_user_settings, get_user_by_telegram_id
-from Services.integrationService import validateTokenAndGetUser, linkTelegramAccount
 from Models.userModel import UserPreferencesInput
 from fastapi import HTTPException, Depends
 from Services.redisService import get_redis
@@ -94,6 +93,13 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds
             await update.callback_query.edit_message_text(f"An unexpected error occurred: {e.detail}. Please try again later.")
     except Exception as e:
         await update.callback_query.edit_message_text("An unexpected error occurred. Please try again later.")
+
+async def send_message(bot_app: Application, telegram_id: int, message: str):
+    try:
+        await bot_app.bot.send_message(chat_id=telegram_id, text=message)
+        return True
+    except Exception as e:
+        return False
 
 def bot_initialization():
     TOKEN = os.getenv("TOKEN")
