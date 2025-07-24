@@ -28,7 +28,7 @@ async def get_calendar_service(refresh_token: str):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def create_calendar_event(details: CalendarEvent):
+async def create_calendar_event(refresh_token: str, details: CalendarEvent):
     try:
         event = {
             "summary": details.summary,
@@ -42,7 +42,7 @@ async def create_calendar_event(details: CalendarEvent):
                 "timeZone": "Asia/Kolkata",
             }
         }
-        calendar_service = get_calendar_service()
+        calendar_service = get_calendar_service(refresh_token)
         event = calendar_service.events().insert(calenderId='primary', body=event).execute()
         return event['id']
     except HTTPException:
@@ -50,7 +50,7 @@ async def create_calendar_event(details: CalendarEvent):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
-async def update_calendar_event(eventId: str, details: CalendarEvent):
+async def update_calendar_event(refresh_token: str, eventId: str, details: CalendarEvent):
     try:
         event = {
             "summary": details.summary,
@@ -64,7 +64,7 @@ async def update_calendar_event(eventId: str, details: CalendarEvent):
                 "timeZone": "Asia/Kolkata",
             }
         }
-        calendar_service = get_calendar_service()
+        calendar_service = get_calendar_service(refresh_token)
         event = calendar_service.events().update(calenderId='primary', eventId=eventId, body=event).execute()
         return True
     except HTTPException:
@@ -72,9 +72,9 @@ async def update_calendar_event(eventId: str, details: CalendarEvent):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def deletee_calendar_event(eventId: str):
+async def delete_calendar_event(refresh_token:str, eventId: str):
     try:
-        calendar_service = get_calendar_service()
+        calendar_service = get_calendar_service(refresh_token)
         event = calendar_service.events().delete(calenderId='primary', eventId=eventId).execute()
         return True
     except HTTPException:
