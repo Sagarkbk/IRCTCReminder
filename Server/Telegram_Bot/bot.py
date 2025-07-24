@@ -2,11 +2,29 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler, Application
 import os
 from Services.userService import update_user_settings, get_user_by_telegram_id
+from Services.journeyService import get_existing_journeys
 from Models.userModel import UserPreferencesInput
 from fastapi import HTTPException, Depends
 from Services.redisService import get_redis
 from redis.asyncio import Redis
 import httpx
+import pendulum
+
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        message = """
+                Welcome! Here are the available commands:
+                
+                /start       - Enable reminders.
+                /stop        - Disable reminders.
+                /journeys    - Lists all of your journeys.
+                /help        - Shows this help message.
+
+                To link your account, please click the "Link Telegram" button on our website. This will bring you here and automatically link your account.
+                """
+        await update.message.reply_text(message)
+    except Exception as e:
+        await update.message.reply_text("An error occurred. Please try again later.")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -42,8 +60,8 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = 
         token = context.args[0]
 
         try:
-            telegram_id = await update.message.from_user.id
-            telegram_username = await update.message.from_user.username
+            telegram_id = update.message.from_user.id
+            telegram_username = update.message.from_user.username
             API_URL = os.getenv("API_URL")
             payload = {
                 "token": token,
@@ -64,6 +82,45 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = 
             await update.message.reply_text("An error occurred. Please try again later.")
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
+
+async def journeys(update: Update, rds: Redis = Depends(get_redis)):
+    try:
+        telegram_id = update.message.from_user.id
+        user = await get_user_by_telegram_id(telegram_id, rds)
+        journeys = await get_existing_journeys(user['id'], rds)
+        if len(journeys) == 0:
+            await update.message.reply_text("You don't have any journeys to be reminded")
+            return
+        
+        message = "Here are your upcoming journeys:\n\n"
+        
+        for journey in journeys:
+            journey_date = pendulum.parse(journey['journey_date'])
+            message += f"*{journey['journey_name']}* (Journey on {journey_date})"
+            reminders = []
+            if journey['reminder_on_release_day']:
+                reminders.append(pendulum.parse(journey['release_day_date']))
+            if journey['reminder_on_day_before']:
+                reminders.append(pendulum.parse(journey['day_before_release_date']))
+            if journey['custom_reminders']:
+                for reminder in journey['custom_reminders']:
+                    reminders.append(pendulum.parse(reminder['reminder_date']))
+            if reminders:
+                unique_reminders = sorted(list(set(reminders)))
+                message += f"Reminders on: {",".join(unique_reminders)}\n\n"
+            else:
+                message += "No reminders set for this journey\n\n"
+
+        await update.message.reply_text(message, parse_mode='Markdown')
+    except Exception as e:
+        await update.callback_query.edit_message_text("An unexpected error occurred. Please try again later.")
+
+async def send_message(bot_app: Application, telegram_id: int, message: str):
+    try:
+        await bot_app.bot.send_message(chat_id=telegram_id, text=message)
+        return True
+    except Exception as e:
+        return False
 
 async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = Depends(get_redis)):
     try:
@@ -94,13 +151,6 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds
     except Exception as e:
         await update.callback_query.edit_message_text("An unexpected error occurred. Please try again later.")
 
-async def send_message(bot_app: Application, telegram_id: int, message: str):
-    try:
-        await bot_app.bot.send_message(chat_id=telegram_id, text=message)
-        return True
-    except Exception as e:
-        return False
-
 def bot_initialization():
     TOKEN = os.getenv("TOKEN")
     if not TOKEN:
@@ -109,5 +159,7 @@ def bot_initialization():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))
     app.add_handler(CommandHandler("link", link))
+    app.add_handler(CommandHandler("help", help))
+    app.add_handler(CommandHandler("journeys", journeys))
     app.add_handler(CallbackQueryHandler(commandHandler))
     return app
