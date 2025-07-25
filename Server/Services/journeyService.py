@@ -173,15 +173,16 @@ async def update_journey(body, user_id, journey_id, rds=None):
                             end_time=f"{pendulum.parse(records[0]['day_before_release_date']).add(days=1)}"
                         ))
 
-                existing_custom_reminders = [record['reminder_date'] for record in records]
+                existing_custom_reminders = [{"rd":record['reminder_date'], "eid":record['google_calendar_event_id_custom_date']} for record in records]
                 reminders_to_be_deleted = []
                 reminders_to_be_inserted = []
-                custom_reminders_events_to_be_updated = []
-                custom_reminders_events_to_be_deleted = []
+                calendar_event_ids_to_be_deleted = []
 
-                for date in existing_custom_reminders:
-                    if date not in body.custom_reminders:
-                        reminders_to_be_deleted.append(date)
+                for rem in existing_custom_reminders:
+                    if rem['rd'] not in body.custom_reminders:
+                        reminders_to_be_deleted.append(rem['rd'])
+                        if rem['eid']:
+                            calendar_event_ids_to_be_deleted.append(rem['eid'])
                 
                 for date in body.custom_reminders:
                     if date not in existing_custom_reminders:
@@ -190,6 +191,9 @@ async def update_journey(body, user_id, journey_id, rds=None):
                 if reminders_to_be_deleted:
                     query = "DELETE FROM custom_reminders WHERE journey_id = $1 AND reminder_date = ANY($2::date[])"
                     await conn.execute(query, journey_id, reminders_to_be_deleted)
+                    
+                    for eventId in calendar_event_ids_to_be_deleted:
+                        await delete_calendar_event(user['google_refresh_token'], eventId)
 
                 if reminders_to_be_inserted:
                     records_to_insert = [(journey_id, date, False) for date in reminders_to_be_inserted]
