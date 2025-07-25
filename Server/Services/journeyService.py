@@ -3,6 +3,10 @@ import pendulum
 from fastapi import HTTPException, status
 from redis.asyncio import Redis
 import json
+from Models.googleCalendarModel import CalendarEvent
+from Services.googleCalendarService import update_calendar_event, delete_calendar_event
+from Services.userService import get_user_by_id
+from Services.redisService import get_redis
 
 async def get_existing_journeys(user_id, rds=None):
     try:
@@ -146,10 +150,34 @@ async def update_journey(body, user_id, journey_id, rds=None):
                                         WHERE id = $4
                                     """
                 await conn.execute(update_journey_query, body.reminder_on_release_day, body.reminder_on_day_before, journey_name, journey_id)
+                user = await get_user_by_id(user_id, rds)
+                if user['calendar_enabled'] and records[0]['google_calendar_event_id_release_date']:
+                    await update_calendar_event(
+                        user['google_refresh_token'],
+                        records[0]['google_calendar_event_id_release_date'],
+                        CalendarEvent(
+                            summary=f"Hi! Tatkal tickets will be release today for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
+                            desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
+                            start_time=records[0]['release_day_datelease_date'],
+                            end_time=f"{pendulum.parse(records[0]['release_day_datelease_date']).add(days=1)}"
+                        ))
+                    
+                if user['calendar_enabled'] and records[0]['google_calendar_event_id_day_before_release']:
+                    await update_calendar_event(
+                        user['google_refresh_token'],
+                        records[0]['google_calendar_event_id_day_before_release'],
+                        CalendarEvent(
+                            summary=f"Hi! Tatkal tickets will be release tomorrow for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
+                            desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
+                            start_time=records[0]['day_before_release_date'],
+                            end_time=f"{pendulum.parse(records[0]['day_before_release_date']).add(days=1)}"
+                        ))
 
                 existing_custom_reminders = [record['reminder_date'] for record in records]
                 reminders_to_be_deleted = []
                 reminders_to_be_inserted = []
+                custom_reminders_events_to_be_updated = []
+                custom_reminders_events_to_be_deleted = []
 
                 for date in existing_custom_reminders:
                     if date not in body.custom_reminders:
