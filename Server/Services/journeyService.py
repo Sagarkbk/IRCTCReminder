@@ -122,9 +122,9 @@ async def update_journey(body, user_id, journey_id, rds=None):
                     print(f"Failed to delete cache journeys:user:{user_id}: {e}")
 
             get_query = """
-                    SELECT j.user_id, j.id as journey_id, j.journey_name, j.release_day_date,
+                    SELECT j.user_id, j.id as journey_id, j.journey_name, j.journey_date, j.google_calendar_event_id_release_date, j.google_calendar_event_id_day_before_release, j.release_day_date,
                     j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
-                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date
+                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.google_calendar_event_id_custom_date
                     FROM journeys j LEFT JOIN custom_reminders cr
                     ON j.id = cr.journey_id
                     WHERE j.user_id = $1 AND j.id = $2
@@ -234,6 +234,21 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
 
                 result = await conn.execute(delete_query, journey_id, user_id)
 
+                journey_details = await get_journey_by_id(user_id, journey_id)
+                eventIds = [reminder['google_calendar_event_id_custom_date'] for reminder in journey['custom_reminders'] if reminder['google_calendar_event_id_custom_date']]
+
+                user = await get_user_by_id(user_id, rds)
+
+                if user['calendar_enabled'] and journey['google_calendar_event_id_release_date']:
+                    await delete_calendar_event(user['google_refresh_token'], journey['google_calendar_event_id_release_date'])
+
+                if user['calendar_enabled'] and journey['google_calendar_event_id_day_before_release']:
+                    await delete_calendar_event(user['google_refresh_token'], journey['google_calendar_event_id_day_before_release'])
+
+                for eventId in eventIds:
+                    await delete_calendar_event(user['google_refresh_token'], eventId)
+
+                
                 if result == "DELETE 0":
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found or deleted already")
 
@@ -256,9 +271,9 @@ async def get_journey_by_id(user_id, journey_id):
     try:
         async with get_db_connection() as conn:
             query = """
-                    SELECT j.id as journey_id, j.journey_name, j.journey_date, j.release_day_date,
+                    SELECT j.id as journey_id, j.journey_name, j.journey_date, j.google_calendar_event_id_release_date, j.google_calendar_event_id_day_before_release, j.release_day_date,
                     j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
-                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.is_sent
+                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.is_sent, cr.google_calendar_event_id_custom_date
                     FROM journeys j LEFT JOIN custom_reminders cr
                     ON j.id = cr.journey_id
                     WHERE j.user_id = $1 AND j.id = $2
@@ -277,6 +292,8 @@ async def get_journey_by_id(user_id, journey_id):
                         "id" : record['journey_id'],
                         "journey_name" : record['journey_name'],
                         "journey_date" : record['journey_date'],
+                        "google_calendar_event_id_release_date": record['google_calendar_event_id_release_date'],
+                        "google_calendar_event_id_day_before_release": record['google_calendar_event_id_day_before_release'],
                         "release_day_date" : record['release_day_date'],
                         "day_before_release_date" : record['day_before_release_date'],
                         "reminder_on_release_day" : record['reminder_on_release_day'],
@@ -289,7 +306,8 @@ async def get_journey_by_id(user_id, journey_id):
                         "id" : record['custom_reminder_id'],
                         "journey_id" : record['custom_reminder_journey_id'],
                         "reminder_date" : record['reminder_date'],
-                        "is_sent" : record['is_sent']
+                        "is_sent" : record['is_sent'],
+                        "google_calendar_event_id_custom_date": record['google_calendar_event_id_custom_date']
                     })
 
             journey['custom_reminders'] = custom_reminders
