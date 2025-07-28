@@ -21,11 +21,23 @@ async def create_google_calendar_event():
             for reminder in calendar_reminders:
                 try:
                     if reminder['reminder_on_release_day'] and not reminder['google_calendar_event_id_release_date']:
+                        date = reminder['release_day_date']
+                        event_day_ist = pendulum.datetime(date.year, date.month, date.day, tz='Asia/Kolkata')
+                        event_start_time = event_day_ist.add(hours=8)
+                        event_end_time = event_day_ist.add(hours=9)
                         details = CalendarEvent(
                                             summary=f"IRCTC Tickets Booking for {reminder['journey_name']} on {reminder['journey_date']}",
                                             desc=f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released today at 8AM IST",
-                                            start_time=reminder['release_day_date'],
-                                            end_time=pendulum.parse(reminder['release_day_date']).add(hours=23)
+                                            start_time=event_start_time,
+                                            end_time=event_end_time,
+                                            reminders={
+                                                "useDefault": False,
+                                                "overrides": [
+                                                    {"method": "popup", "minutes": 60},
+                                                    {"method": "popup", "minutes": 10},
+                                                    {"method": "popup", "minutes": 0},
+                                                ]
+                                            }
                                         )
                         eventId = await create_calendar_event(reminder['google_refresh_token'], details)
                         await conn.execute(
@@ -36,11 +48,23 @@ async def create_google_calendar_event():
                                     )
                     
                     if reminder['reminder_on_day_before'] and not reminder['google_calendar_event_id_day_before_release']:
+                        date = reminder['day_before_release_date']
+                        event_day_ist = pendulum.datetime(date.year, date.month, date.day, tz='Asia/Kolkata')
+                        event_start_time = event_day_ist.add(hours=8)
+                        event_end_time = event_day_ist.add(hours=9)
                         details = CalendarEvent(
                                             summary=f"IRCTC Tickets Booking for {reminder['journey_name']} on {reminder['journey_date']}",
                                             desc=f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released tomorrow at 8AM IST",
-                                            start_time=reminder['day_before_release_date'],
-                                            end_time=pendulum.parse(reminder['day_before_release_date']).add(hours=23)
+                                            start_time=event_start_time,
+                                            end_time=event_end_time,
+                                            reminders={
+                                                "useDefault": False,
+                                                "overrides": [
+                                                    {"method": "popup", "minutes": 60},
+                                                    {"method": "popup", "minutes": 10},
+                                                    {"method": "popup", "minutes": 0},
+                                                ]
+                                            }
                                         )
                         eventId = await create_calendar_event(reminder['google_refresh_token'], details)
                         await conn.execute(
@@ -52,8 +76,8 @@ async def create_google_calendar_event():
                 except Exception as e:
                     print(f"Failed while creating calendar event for user {reminder['uid']} for journey {reminder['journey_name']}. Error: {e}")
                     continue
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server issue")
+    except Exception as e:
+        print(f"Error in create_google_calendar_event: {e}")
     
 async def send_telegram_reminders(request: Request):
     try:
@@ -100,4 +124,4 @@ async def send_telegram_reminders(request: Request):
                     ]}. Error: {e}")
                     continue
     except Exception as e:
-        print(f"Exception: {e}")
+        print(f"Error in send_telegram_reminders: {e}")

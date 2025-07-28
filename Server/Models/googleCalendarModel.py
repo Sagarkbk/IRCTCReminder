@@ -6,3 +6,4 @@ class CalendarEvent(BaseModel):
     desc: str
     start_time: date
     end_time: date
+    reminders: dict

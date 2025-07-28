@@ -10,6 +10,9 @@ from Telegram_Bot.bot import bot_initialization
 from contextlib import asynccontextmanager
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from Services.schedulerService import create_google_calendar_event, send_telegram_reminders
+from pendulum.tz.timezone import UTC
 
 load_dotenv()
 
@@ -27,7 +30,16 @@ async def lifespan(app: FastAPI):
     app.state.ptb_app = ptb_app
     print("Bot has been initialized")
 
+    scheduler = AsyncIOScheduler(timezone=UTC)
+    scheduler.add_job(send_telegram_reminders, 'cron', hour='1, 3, 5', minute='30')
+    scheduler.add_job(create_google_calendar_event, 'cron', hour='16, 17', minute='0')
+    scheduler.start()
+    print("Scheduler has started")
+
     yield
+
+    await scheduler.shutdown()
+    print("Scheduler has shutdown")
 
     await FastAPILimiter.close()
     print("FastAPILimiter has been closed")

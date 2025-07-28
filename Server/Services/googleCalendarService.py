@@ -40,7 +40,8 @@ async def create_calendar_event(refresh_token: str, details: CalendarEvent):
             "end":{
                 "dateTime": details.end_time,
                 "timeZone": "Asia/Kolkata",
-            }
+            },
+            "reminders": details.reminders
         }
         calendar_service = get_calendar_service(refresh_token)
         event = calendar_service.events().insert(calenderId='primary', body=event).execute()
@@ -62,7 +63,8 @@ async def update_calendar_event(refresh_token: str, eventId: str, details: Calen
             "end":{
                 "dateTime": details.end_time,
                 "timeZone": "Asia/Kolkata",
-            }
+            },
+            "reminders": details.reminders
         }
         calendar_service = get_calendar_service(refresh_token)
         event = calendar_service.events().update(calenderId='primary', eventId=eventId, body=event).execute()
