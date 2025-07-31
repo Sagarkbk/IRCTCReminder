@@ -1,4 +1,14 @@
+import { MdLightMode } from "react-icons/md";
+import { MdDarkMode } from "react-icons/md";
+import { useState } from "react";
+
 export function PublicNavbar() {
+  const [theme, setTheme] = useState<"Light" | "Dark">("Light");
+
+  const toggleTheme = () => {
+    setTheme(theme === "Light" ? "Dark" : "Light");
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md p-4 dark:bg-gray-800 dark:shadow-lg flex items-center justify-between sm:px-6 md:px-8 lg:px-12">
       <a href="#" className="text-xl font-bold text-gray-900 dark:text-white">
@@ -24,10 +34,14 @@ export function PublicNavbar() {
           Features
         </a>
         <button
+          onClick={toggleTheme}
           className="p-2 rounded-full text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center justify-center cursor-pointer"
-          aria-label="Toggle theme"
         >
-          ☀️
+          {theme === "Light" ? (
+            <MdDarkMode size={24} />
+          ) : (
+            <MdLightMode size={24} />
+          )}
         </button>
       </div>
     </nav>
