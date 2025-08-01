@@ -1,12 +1,31 @@
 import { MdLightMode } from "react-icons/md";
 import { MdDarkMode } from "react-icons/md";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function PublicNavbar() {
-  const [theme, setTheme] = useState<"Light" | "Dark">("Light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      return savedTheme;
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === "Light" ? "Dark" : "Light");
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
   return (
@@ -37,7 +56,7 @@ export function PublicNavbar() {
           onClick={toggleTheme}
           className="p-2 rounded-full text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center justify-center cursor-pointer"
         >
-          {theme === "Light" ? (
+          {theme === "light" ? (
             <MdDarkMode size={24} />
           ) : (
             <MdLightMode size={24} />
