@@ -31,27 +31,47 @@ export function PublicNavbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md p-4 dark:bg-gray-800 dark:shadow-lg flex items-center justify-between sm:px-6 md:px-8 lg:px-12">
       <a
-        href="#"
-        className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+        className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+        onClick={(e) => {
+          e.preventDefault();
+          document
+            .getElementById("hero")
+            ?.scrollIntoView({ behavior: "smooth" });
+        }}
       >
         IRCTC Reminder
       </a>
       <div className="flex items-center gap-x-4 sm:gap-x-6 mr-30">
         <a
-          href="#home"
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400"
+          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            document
+              .getElementById("hero")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
         >
           Home
         </a>
         <a
-          href="#howitworks"
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400"
+          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            document
+              .getElementById("howitworks")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
         >
           How it works
         </a>
         <a
-          href="#features"
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400"
+          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            document
+              .getElementById("features")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
         >
           Features
         </a>
