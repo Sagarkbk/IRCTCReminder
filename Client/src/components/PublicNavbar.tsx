@@ -58,6 +58,17 @@ export function PublicNavbar() {
           onClick={(e) => {
             e.preventDefault();
             document
+              .getElementById("demo")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          Demo
+        </a>
+        <a
+          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            document
               .getElementById("howitworks")
               ?.scrollIntoView({ behavior: "smooth" });
           }}

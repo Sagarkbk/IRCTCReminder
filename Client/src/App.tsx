@@ -1,4 +1,5 @@
 import "./App.css";
+import { Demo } from "./components/Demo";
 import { Features } from "./components/Features";
 import { Hero } from "./components/Hero";
 import { HowItWorks } from "./components/HowItWorks";
@@ -9,6 +10,7 @@ function App() {
     <>
       <PublicNavbar />
       <Hero />
+      <Demo />
       <HowItWorks />
       <Features />
     </>
