@@ -1,49 +1,14 @@
-import { MdLightMode } from "react-icons/md";
-import { MdDarkMode } from "react-icons/md";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { FiMenu, FiX } from "react-icons/fi";
 
 export function PublicNavbar() {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      return savedTheme;
-    }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "light";
-  });
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md p-4 dark:bg-gray-800 dark:shadow-lg flex items-center justify-between sm:px-6 md:px-8 lg:px-12">
-      <a
-        className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-        onClick={(e) => {
-          e.preventDefault();
-          document
-            .getElementById("hero")
-            ?.scrollIntoView({ behavior: "smooth" });
-        }}
-      >
-        IRCTC Reminder
-      </a>
-      <div className="flex items-center gap-x-4 sm:gap-x-6 mr-30">
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-800 shadow-lg grid grid-cols-3 items-center p-4 sm:px-6 md:px-8 lg:px-12">
         <a
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+          className="text-xl font-bold text-white hover:text-blue-400 cursor-pointer"
           onClick={(e) => {
             e.preventDefault();
             document
@@ -51,52 +16,123 @@ export function PublicNavbar() {
               ?.scrollIntoView({ behavior: "smooth" });
           }}
         >
-          Home
+          IRCTC Reminder
         </a>
-        <a
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-          onClick={(e) => {
-            e.preventDefault();
-            document
-              .getElementById("demo")
-              ?.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          Demo
-        </a>
-        <a
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-          onClick={(e) => {
-            e.preventDefault();
-            document
-              .getElementById("howitworks")
-              ?.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          How it works
-        </a>
-        <a
-          className="text-gray-700 dark:text-gray-300 text-base sm:text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-          onClick={(e) => {
-            e.preventDefault();
-            document
-              .getElementById("features")
-              ?.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          Features
-        </a>
-      </div>
-      <button
-        onClick={toggleTheme}
-        className="p-2 rounded-full text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center justify-center cursor-pointer"
+        <div className="hidden md:flex justify-center items-center gap-x-4 sm:gap-x-6">
+          <a
+            className="text-gray-300 text-base sm:text-lg hover:text-blue-400 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("hero")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Home
+          </a>
+          <a
+            className="text-gray-300 text-base sm:text-lg hover:text-blue-400 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("demo")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Demo
+          </a>
+          <a
+            className="text-gray-300 text-base sm:text-lg hover:text-blue-400 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("howitworks")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            How it works
+          </a>
+          <a
+            className="text-gray-300 text-base sm:text-lg hover:text-blue-400 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .getElementById("features")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Features
+          </a>
+        </div>
+        <div className="md:hidden flex justify-end items-center col-start-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="cursor-pointer"
+          >
+            {sidebarOpen ? (
+              <FiX className="w-6 h-6 text-white" />
+            ) : (
+              <FiMenu className="w-6 h-6 text-white" />
+            )}
+          </button>
+        </div>
+      </nav>
+      <div
+        className={`fixed top-0 right-0 w-64 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:hidden z-40`}
       >
-        {theme === "light" ? (
-          <MdDarkMode size={24} />
-        ) : (
-          <MdLightMode size={24} />
-        )}
-      </button>
-    </nav>
+        <div className="p-5 pt-16 flex flex-col">
+          <a
+            className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              setSidebarOpen(false);
+              document
+                .getElementById("hero")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Home
+          </a>
+          <a
+            className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              setSidebarOpen(false);
+              document
+                .getElementById("demo")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Demo
+          </a>
+          <a
+            className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              setSidebarOpen(false);
+              document
+                .getElementById("howitworks")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            How it works
+          </a>
+          <a
+            className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              setSidebarOpen(false);
+              document
+                .getElementById("features")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Features
+          </a>
+        </div>
+      </div>
+    </>
   );
 }
