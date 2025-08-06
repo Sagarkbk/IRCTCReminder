@@ -2,25 +2,25 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="h-screen flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-900"
+      className="h-screen flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 bg-slate-900"
     >
       <div className="max-w-3xl">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-800 dark:text-slate-200">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-teal-500">
           Never Miss Your IRCTC Booking Window Again
         </h1>
 
-        <p className="mt-4 text-lg sm:text-xl text-slate-600 dark:text-slate-400">
+        <p className="mt-6 max-w-2xl mx-auto text-xl text-slate-300">
           Get automated reminders for train ticket bookings with precise timing.
           Stay informed about your travel plans without the stress.
         </p>
       </div>
 
       <div className="mt-8 flex flex-wrap justify-center gap-4">
-        <button className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 cursor-pointer">
+        <button className="px-8 py-3 font-semibold text-white bg-transparent border-2 border-indigo-500 rounded-full shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer">
           Sign In with Google
         </button>
         <a
-          className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-75 cursor-pointer"
+          className="px-8 py-3 font-semibold text-white bg-transparent border-2 border-emerald-500 rounded-full shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 focus:ring-offset-slate-900 cursor-pointer"
           onClick={(e) => {
             e.preventDefault();
             document
