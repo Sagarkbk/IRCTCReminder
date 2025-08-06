@@ -82,7 +82,7 @@ export function PublicNavbar() {
           sidebarOpen ? "translate-x-0" : "translate-x-full"
         } md:hidden z-40`}
       >
-        <div className="p-5 pt-16 flex flex-col">
+        <div className="p-5 pt-16 mt-4 flex flex-col">
           <a
             className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
             onClick={(e) => {
