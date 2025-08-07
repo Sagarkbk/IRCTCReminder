@@ -2,7 +2,7 @@ export function Demo() {
   return (
     <section
       id="demo"
-      className="flex flex-col items-center justify-center text-center px-4 py-20 sm:py-24 sm:px-6 lg:px-8 bg-slate-900"
+      className="flex flex-col items-center justify-center text-center px-4 py-24 sm:px-6 lg:px-8 bg-slate-900"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">

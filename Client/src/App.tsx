@@ -1,19 +1,21 @@
 import "./App.css";
 import { Demo } from "./components/Demo";
-import { Features } from "./components/Features";
 import { Hero } from "./components/Hero";
 import { HowItWorks } from "./components/HowItWorks";
 import { PublicNavbar } from "./components/PublicNavbar";
+import { PublicFooter } from "./components/PublicFooter";
 
 function App() {
   return (
-    <>
+    <div>
       <PublicNavbar />
-      <Hero />
-      <Demo />
-      <HowItWorks />
-      <Features />
-    </>
+      <main>
+        <Hero />
+        <Demo />
+        <HowItWorks />
+      </main>
+      <PublicFooter />
+    </div>
   );
 }
 

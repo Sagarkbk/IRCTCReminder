@@ -52,17 +52,6 @@ export function PublicNavbar() {
           >
             How it works
           </a>
-          <a
-            className="text-gray-300 text-base sm:text-lg hover:text-blue-400 cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              document
-                .getElementById("features")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-          >
-            Features
-          </a>
         </div>
         <div className="md:hidden flex justify-end items-center col-start-3">
           <button
@@ -82,7 +71,7 @@ export function PublicNavbar() {
           sidebarOpen ? "translate-x-0" : "translate-x-full"
         } md:hidden z-40`}
       >
-        <div className="p-5 pt-16 mt-4 flex flex-col">
+        <div className="p-5 pt-16 mt-6 flex flex-col">
           <a
             className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
             onClick={(e) => {
@@ -118,18 +107,6 @@ export function PublicNavbar() {
             }}
           >
             How it works
-          </a>
-          <a
-            className="text-gray-300 text-lg hover:text-blue-400 py-2 cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              setSidebarOpen(false);
-              document
-                .getElementById("features")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-          >
-            Features
           </a>
         </div>
       </div>
