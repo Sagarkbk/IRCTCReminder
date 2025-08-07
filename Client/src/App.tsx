@@ -1,21 +1,18 @@
 import "./App.css";
-import { Demo } from "./components/Demo";
-import { Hero } from "./components/Hero";
-import { HowItWorks } from "./components/HowItWorks";
-import { PublicNavbar } from "./components/PublicNavbar";
-import { PublicFooter } from "./components/PublicFooter";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Landing } from "./pages/Landing";
+import { Home } from "./pages/Home";
+import { useCheckAuth } from "./hooks/useCheckAuth";
 
 function App() {
+  const { isAuthenticated } = useCheckAuth();
+
   return (
-    <div>
-      <PublicNavbar />
-      <main>
-        <Hero />
-        <Demo />
-        <HowItWorks />
-      </main>
-      <PublicFooter />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={isAuthenticated ? <Home /> : <Landing />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
