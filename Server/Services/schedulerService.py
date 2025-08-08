@@ -1,4 +1,3 @@
-from fastapi import HTTPException, status, Request
 from Telegram_Bot.bot import send_message
 from Services.googleCalendarService import create_calendar_event
 from Database.connection import get_db_connection
@@ -79,7 +78,7 @@ async def create_google_calendar_event():
     except Exception as e:
         print(f"Error in create_google_calendar_event: {e}")
     
-async def send_telegram_reminders(request: Request):
+async def send_telegram_reminders(ptb_app):
     try:
         async with get_db_connection() as conn:
 
@@ -98,7 +97,7 @@ async def send_telegram_reminders(request: Request):
                 try:
                     if reminder['release_day_date'] == today and not reminder['sent_telegram_reminder_release_day']:
                         await send_message(
-                                        request.app.state.ptb_app, 
+                                        ptb_app,
                                         reminder['telegram_id'], 
                                         f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released today at 8AM IST"
                                     )
@@ -110,7 +109,7 @@ async def send_telegram_reminders(request: Request):
                         
                     if reminder['day_before_release_date'] == today and not reminder['sent_telegram_reminder_day_before']:
                         await send_message(
-                                        request.app.state.ptb_app, 
+                                        ptb_app,
                                         reminder['telegram_id'], 
                                         f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released tomorrow at 8AM IST"
                                     )
@@ -120,8 +119,7 @@ async def send_telegram_reminders(request: Request):
                                         reminder['id']
                                     )
                 except Exception as e:
-                    print(f"Failed to send telegram reminder to user {reminder['uid']}, telegram id {reminder['telegram_id']} for journey {reminder['journey_name'
-                    ]}. Error: {e}")
+                    print(f"Failed to send telegram reminder to user {reminder['uid']}, telegram id {reminder['telegram_id']} for journey {reminder['journey_name']}. Error: {e}")
                     continue
     except Exception as e:
         print(f"Error in send_telegram_reminders: {e}")

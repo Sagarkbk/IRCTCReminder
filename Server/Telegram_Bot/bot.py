@@ -107,7 +107,8 @@ async def journeys(update: Update, rds: Redis = Depends(get_redis)):
                     reminders.append(pendulum.parse(reminder['reminder_date']))
             if reminders:
                 unique_reminders = sorted(list(set(reminders)))
-                message += f"Reminders on: {",".join(unique_reminders)}\n\n"
+                reminders_str = ", ".join(map(str, unique_reminders))
+                message += f"Reminders on: {reminders_str}\n\n"
             else:
                 message += "No reminders set for this journey\n\n"
 
