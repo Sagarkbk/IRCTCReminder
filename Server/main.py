@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     print("Bot has been initialized")
 
     scheduler = AsyncIOScheduler(timezone=UTC)
-    scheduler.add_job(send_telegram_reminders, 'cron', hour='1, 3, 5', minute='30')
+    scheduler.add_job(send_telegram_reminders, 'cron', hour='1, 3, 5', minute='30', args=[ptb_app])
     scheduler.add_job(create_google_calendar_event, 'cron', hour='16, 17', minute='0')
     scheduler.start()
     print("Scheduler has started")
