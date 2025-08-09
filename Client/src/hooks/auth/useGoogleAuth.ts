@@ -19,6 +19,7 @@ export function useGoogleAuth() {
       }
     },
     flow: "auth-code",
+    scope: "https://www.googleapis.com/auth/calendar.events",
   });
   return { handleGoogleAuth };
 }
