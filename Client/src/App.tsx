@@ -2,8 +2,8 @@ import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Landing } from "./pages/Landing";
 import { Home } from "./pages/Home";
-import { useCheckAuth } from "./hooks/useCheckAuth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { useCheckAuth } from "./hooks/auth/useCheckAuth";
 
 function App() {
   const { isAuthenticated } = useCheckAuth();

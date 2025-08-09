@@ -1,22 +1,7 @@
-import { useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
+import { useGoogleAuth } from "../hooks/auth/useGoogleAuth";
 
 export function Hero() {
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (codeResponse) => {
-      try {
-        const { code } = codeResponse;
-        const response = await axios.post("/api", {
-          authCode: code,
-          clientId: import.meta.env.VITE_WEB_CLIENT_ID,
-        });
-        console.log(response.data);
-      } catch (error) {
-        console.error("Login/Signup failed:", error);
-      }
-    },
-    flow: "auth-code",
-  });
+  const { handleGoogleAuth } = useGoogleAuth();
 
   return (
     <section
@@ -37,7 +22,7 @@ export function Hero() {
       <div className="mt-8 flex flex-wrap justify-center gap-4">
         <button
           className="px-8 py-3 font-semibold text-white bg-transparent border-2 border-indigo-500 rounded-full shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer"
-          onClick={() => handleGoogleLogin()}
+          onClick={() => handleGoogleAuth()}
         >
           Sign In with Google
         </button>
