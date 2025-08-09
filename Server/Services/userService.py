@@ -9,9 +9,9 @@ async def create_user(userInfo, google_refresh_token, rds=None):
     try:
         async with get_db_connection() as conn:
             query = """
-                    INSERT INTO users (google_id, email, username, google_refresh_token, last_updated_at) 
-                    VALUES ($1, $2, $3, $4, $5) 
-                    RETURNING *
+                    INSERT INTO users (google_id, email, username, google_refresh_token, calendar_enabled, last_updated_at) 
+                    VALUES ($1, $2, $3, $4, $5, $6) 
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled
                     """
             result = await conn.fetchrow(
                                         query, 
@@ -19,6 +19,7 @@ async def create_user(userInfo, google_refresh_token, rds=None):
                                         userInfo.get('email'), 
                                         userInfo.get('name'),
                                         google_refresh_token,
+                                        True,
                                         pendulum.now('UTC')
                                     )
             
@@ -71,7 +72,7 @@ async def get_user_by_google_id(google_id):
     try:
         async with get_db_connection() as conn:
             query = """
-                    SELECT * FROM users WHERE google_id = $1
+                    SELECT id, email, username, calendar_enabled, telegram_enabled FROM users WHERE google_id = $1
                     """
             existingUser = await conn.fetchrow(query, google_id)
             if existingUser is None:
@@ -90,7 +91,7 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
                     UPDATE users 
                     SET email = $1, username = $2, google_refresh_token = $3, last_updated_at = $4
                     WHERE id = $5
-                    RETURNING *
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled
                     """
             if rds:
                 try:
