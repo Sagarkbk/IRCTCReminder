@@ -16,8 +16,11 @@ export function useGoogleAuth() {
             clientId: import.meta.env.VITE_WEB_CLIENT_ID,
           }
         );
-        console.log(response.data);
-        login(response.data);
+        const data = response.data.data;
+        const user = data.user;
+        console.log(data);
+        login(user);
+        localStorage.setItem("jwt_token", data.token);
       } catch (error) {
         console.error("Login/Signup failed:", error);
       }
