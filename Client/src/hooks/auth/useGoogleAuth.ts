@@ -1,7 +1,10 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import { useAuth } from "./useAuth";
 
 export function useGoogleAuth() {
+  const { login } = useAuth();
+
   const handleGoogleAuth = useGoogleLogin({
     onSuccess: async (codeResponse) => {
       try {
@@ -14,6 +17,7 @@ export function useGoogleAuth() {
           }
         );
         console.log(response.data);
+        login(response.data);
       } catch (error) {
         console.error("Login/Signup failed:", error);
       }
