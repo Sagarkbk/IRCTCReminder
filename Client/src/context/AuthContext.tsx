@@ -11,8 +11,12 @@ interface User {
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  isLoading: boolean;
+  error: string | null;
   login: (userData: User) => void;
   logout: () => void;
+  setError: (error: string | null) => void;
+  setIsLoading: (loading: boolean) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -31,6 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
@@ -45,8 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue = {
     isAuthenticated: !!user,
     user: user,
+    isLoading,
+    error,
     login: login,
     logout: logout,
+    setIsLoading,
+    setError,
   };
 
   return (

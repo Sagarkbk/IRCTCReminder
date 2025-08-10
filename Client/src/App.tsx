@@ -7,11 +7,27 @@ import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/auth/useAuth";
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+        Loading...
+      </div>
+    );
+  }
+
   return (
-    <Routes>
-      <Route path="/" element={isAuthenticated ? <Home /> : <Landing />} />
-    </Routes>
+    <>
+      {error && (
+        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white p-3 text-center z-50">
+          {error}
+        </div>
+      )}
+      <Routes>
+        <Route path="/" element={isAuthenticated ? <Home /> : <Landing />} />
+      </Routes>
+    </>
   );
 };
 
