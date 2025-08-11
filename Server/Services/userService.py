@@ -50,7 +50,7 @@ async def get_user_by_id(user_id, rds=None):
 
         async with get_db_connection() as conn:
             query = """
-                    SELECT * FROM users WHERE id = $1
+                    SELECT id, email, username, calendar_enabled, telegram_enabled FROM users WHERE id = $1
                     """
             existingUser = await conn.fetchrow(query, user_id)
             if existingUser is None:
