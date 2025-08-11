@@ -2,8 +2,16 @@ import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 import apiClient from "../../api/apiClient";
 
+interface UserProfile {
+  id: number;
+  email: string;
+  username: string;
+  calendar_enabled: boolean;
+  telegram_enabled: boolean;
+}
+
 export function useUserProfile() {
-  const [data, setData] = useState(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -13,7 +21,7 @@ export function useUserProfile() {
         setIsLoading(true);
         setError(null);
         const response = await apiClient.get("/user/profile");
-        setData(response.data.data);
+        setUserData(response.data.data);
       } catch (err) {
         if (isAxiosError(err)) {
           setError(
@@ -30,5 +38,5 @@ export function useUserProfile() {
     fetchUserProfile();
   }, []);
 
-  return { data, error, isLoading };
+  return { userData, error, isLoading };
 }

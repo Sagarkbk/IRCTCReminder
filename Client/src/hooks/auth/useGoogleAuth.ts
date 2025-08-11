@@ -12,7 +12,7 @@ export function useGoogleAuth() {
         setError(null);
         const { code } = codeResponse;
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/auth/google`,
+          `${import.meta.env.VITE_API_URL}/auth/google`,
           {
             authCode: code,
             clientId: import.meta.env.VITE_WEB_CLIENT_ID,
