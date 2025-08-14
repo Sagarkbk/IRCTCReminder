@@ -5,6 +5,7 @@ import { Home } from "./pages/Home";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/auth/useAuth";
+import { Profile } from "./pages/Profile";
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -25,7 +26,14 @@ const AppRoutes = () => {
         </div>
       )}
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Home /> : <Landing />} />
+        {isAuthenticated ? (
+          <>
+            <Route path="/" element={<Home />} />
+            <Route path="/profile" element={<Profile />} />
+          </>
+        ) : (
+          <Route path="/" element={<Landing />} />
+        )}
       </Routes>
     </>
   );

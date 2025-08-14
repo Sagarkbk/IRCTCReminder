@@ -2,7 +2,7 @@ import { FaChevronDown } from "react-icons/fa";
 import { useAuth } from "../hooks/auth/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function HomeNavbar() {
   const { user, logout } = useAuth();
@@ -35,7 +35,9 @@ export function HomeNavbar() {
   return (
     <nav className="bg-slate-800 p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="text-white text-xl font-bold">IRCTC Reminder</div>
+        <Link to="/" className="text-white text-xl font-bold cursor-pointer">
+          IRCTC Reminder
+        </Link>
         <div className="relative" ref={dropdownRef}>
           {" "}
           <button
@@ -52,15 +54,15 @@ export function HomeNavbar() {
           </button>
           {isDropdownOpen && (
             <div className="absolute right-2 top-full mt-1 bg-slate-700 rounded-md shadow-lg py-1 z-10 min-w-max max-w-xs lg:left-0">
-              <a
-                href="#"
+              <Link
+                to={"/profile"}
                 className="block px-4 py-2 text-sm text-white hover:bg-slate-600"
               >
                 Profile
-              </a>
+              </Link>
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-slate-600"
+                className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-slate-600 cursor-pointer"
               >
                 Logout
               </button>
