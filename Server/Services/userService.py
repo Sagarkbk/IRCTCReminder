@@ -162,7 +162,7 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                     UPDATE users
                     SET calendar_enabled = $1, telegram_enabled = $2, last_updated_at = $3
                     WHERE id = $4
-                    RETURNING *
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled
                     """
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)

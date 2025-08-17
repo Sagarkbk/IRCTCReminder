@@ -2,5 +2,5 @@ from pydantic import BaseModel
 from typing import Optional
 
 class UserPreferencesInput(BaseModel):
-    calendar_enabled: Optional[bool]
-    telegram_enabled: Optional[bool]
+    calendar_enabled: bool | None = None
+    telegram_enabled: bool | None = None
