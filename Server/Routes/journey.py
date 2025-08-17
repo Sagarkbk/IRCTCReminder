@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends, HTTPException
-from Services.journeyService import get_existing_journeys, add_journey, update_journey, delete_journey_by_id
+from Services.journeyService import get_existing_journeys, add_journey, update_journey, delete_journey_by_id, get_journey_stats
 from Middlewares.middlewares import authMiddleware
 from fastapi_limiter.depends import RateLimiter
 from Services.redisService import get_redis
@@ -43,6 +43,16 @@ async def deleteJourney(journey_id: int, user_id: int =  Depends(authMiddleware)
     try:
         journeys = await delete_journey_by_id(user_id, journey_id, rds)
         return {"data": journeys}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+@journeyRouter.get("/journeyStats", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+async def journeyStats(user_id: int = Depends(authMiddleware)):
+    try:
+        stats = await get_journey_stats(user_id)
+        return {"data" : stats}
     except HTTPException:
         raise
     except Exception:

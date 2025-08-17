@@ -316,3 +316,21 @@ async def get_journey_by_id(user_id, journey_id):
         raise
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+    
+async def get_journey_stats(user_id):
+    try:
+        async with get_db_connection() as conn:
+            query = """
+                    SELECT COUNT(*) AS total_journeys, 
+                    COUNT(*) FILTER (WHERE journey_date < $1) AS completed_journeys, 
+                    COUNT(*) FILTER (WHERE journey_date >= $1) AS yet_to_complete_journeys
+                    FROM journeys 
+                    WHERE user_id = $2;
+                    """
+            today = pendulum.now('UTC').to_date_string()
+            stats = await conn.fetchrow(query, today, user_id)
+            return dict(stats)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
