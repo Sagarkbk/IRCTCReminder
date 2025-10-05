@@ -17,8 +17,11 @@ export function AccountIntegrations({ user }: { user: User }) {
   const { revokeCalendar, isLoading: CalendarRevokeLoading } =
     useGoogleCalendarRevoke();
 
-  const { connectTelegram, isLoading: telegramConnectLoading } =
-    useTelegramConnect();
+  const {
+    generateToken,
+    token,
+    isLoading: telegramConnectLoading,
+  } = useTelegramConnect();
   const { revokeTelegram, isLoading: telegramRevokeLoading } =
     useTelegramRevoke();
 
@@ -49,20 +52,46 @@ export function AccountIntegrations({ user }: { user: User }) {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Connect Telegram"
+        title="Connect Telegram Account"
       >
-        <div className="p-4">
-          <p className="text-slate-300 mb-4">
-            This is a placeholder for the Telegram connection instructions.
-          </p>
-          <div className="flex justify-end space-x-2">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 rounded bg-slate-600 hover:bg-slate-700"
-            >
-              Close
-            </button>
-          </div>
+        <div className="p-4 text-slate-300">
+          {telegramConnectLoading ? (
+            <p>Generating token, please wait...</p>
+          ) : token ? (
+            <div>
+              <p className="mb-4 text-slate-300 text-center">
+                A secure link has been generated. Click the button below to open
+                Telegram and link your account.
+              </p>
+              <a
+                href={`https://t.me/TicketBookingReminderBot?text=/link%20${token}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full text-center px-4 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white -bold transition-colors duration-200"
+              >
+                Connect via Telegram
+              </a>
+              <p className="text-sm text-slate-400 mt-4 text-center">
+                This link is valid for 30 minutes.
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="mb-4">
+                Click the button below to generate a unique token. You will then
+                send this token to the IRCTC Reminder Bot on Telegram to link
+                your account.
+              </p>
+              <div className="flex justify-end">
+                <button
+                  onClick={generateToken}
+                  className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                >
+                  Generate Token
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </section>

@@ -52,7 +52,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
-async def link(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = Depends(get_redis)):
+async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not context.args:
             await update.message.reply_text("To link your account, please use the link provided on our website.")

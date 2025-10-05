@@ -1,27 +1,32 @@
 import { useState } from "react";
 import apiClient from "../../api/apiClient";
 import { isAxiosError } from "axios";
-import { useAuth } from "../auth/useAuth";
+// import { useAuth } from "../auth/useAuth";
 
 export function useTelegramConnect() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { login } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+  // const { login } = useAuth();
 
-  const connectTelegram = async () => {
+  const generateToken = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiClient.put(
-        `${import.meta.env.VITE_API_URL}/user/preferences`,
+      setToken(null);
+      const response = await apiClient.post(
+        `${import.meta.env.VITE_API_URL}/integration/telegram/generateToken`,
         {
           telegram_enabled: true,
         }
       );
-      login(response.data.data);
+      setToken(response.data.data);
+      // login(response.data.data);
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.detail || "Failed to fetch user profile.");
+        setError(
+          err.response?.data?.detail || "Failed to generate connection token."
+        );
       } else {
         setError("An unexpected error occurred.");
       }
@@ -30,5 +35,5 @@ export function useTelegramConnect() {
     }
   };
 
-  return { connectTelegram, error, isLoading };
+  return { generateToken, token, error, isLoading };
 }
