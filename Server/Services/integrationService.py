@@ -14,6 +14,20 @@ async def generateLinkingToken(user_id, rds=None):
             if user is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
             
+            current_time = pendulum.now('UTC')
+
+            existing_token_query = """
+                                SELECT token FROM google_telegram_link 
+                                WHERE user_id = $1 AND
+                                expires_at > $2 AND
+                                is_used = $3
+                                """
+            existing_token = await conn.fetchrow(existing_token_query, user_id, current_time, False)
+            print(f"existing token: {existing_token}")
+
+            if existing_token:
+                return existing_token['token']
+            
             token = secrets.token_urlsafe(32)
             query = """
                     INSERT INTO google_telegram_link (user_id, token, expires_at)
@@ -34,6 +48,7 @@ async def generateLinkingToken(user_id, rds=None):
 
 async def linkTelegramAccount(body, user_id, token, rds=None):
     try:
+        print("Inside linkTelegramAccount")
         async with get_db_connection() as conn:
             existingUser = await get_user_by_id(user_id, rds)
             if existingUser is None:
@@ -51,9 +66,10 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
             update_user_query = """
                     UPDATE users SET telegram_id = $1,
                     telegram_username = $2,
-                    telegram_linked_at = $3,
-                    last_updated_at = $3
-                    WHERE id = $4
+                    telegram_enabled = $3,
+                    telegram_linked_at = $4,
+                    last_updated_at = $4
+                    WHERE id = $5
                     RETURNING *
                     """
             update_token_query = """
@@ -63,7 +79,7 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
             current_time = pendulum.now('UTC')
             
             async with conn.transaction():
-                user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, current_time, user_id)
+                user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, True, current_time, user_id)
                 await conn.execute(update_token_query, True, user_id, token)
 
                 if rds and user:
@@ -82,17 +98,24 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
 
 async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
     try:
+        print("Reached validateTokenAndGetUser")
         async with get_db_connection() as conn:
+            print("Before query")
             token_query = "SELECT * FROM google_telegram_link WHERE token = $1"
             token_data = await conn.fetchrow(token_query, token)
+            print("After query")
+            print(token_data)
 
             if token_data is None:
+                print("Invalid token")
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token.")
             
             if token_data['is_used']:
+                print("Already used")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your token has already been used.")
 
             if token_data['expires_at'] < pendulum.now('UTC'):
+                print("Expired")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has expired.")
 
             user_id = token_data['user_id']
@@ -100,6 +123,8 @@ async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
             user = await get_user_by_id(user_id, rds)
             return user
     except HTTPException:
+        print(Exception)
         raise
     except Exception:
+        print(Exception)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

@@ -14,6 +14,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from Services.schedulerService import create_google_calendar_event, send_telegram_reminders
 from pendulum.tz.timezone import UTC
 from fastapi.middleware.cors import CORSMiddleware
+from telegram import Update
+import os
 
 load_dotenv()
 
@@ -28,6 +30,18 @@ async def lifespan(app: FastAPI):
 
     ptb_app = bot_initialization()
     await ptb_app.initialize()
+
+    WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+    if WEBHOOK_URL:
+        full_webhook_url = f"{WEBHOOK_URL}/api/telegram/webhook"
+        await ptb_app.bot.set_webhook(
+            url=full_webhook_url,
+            allowed_updates=Update.ALL_TYPES
+        )
+        print(f"Telegram webhook set to: {full_webhook_url}")
+    else:
+        print("WARNING: WEBHOOK_URL environment variable not set. Bot will not receive updates.")
+
     app.state.ptb_app = ptb_app
     print("Bot has been initialized")
 

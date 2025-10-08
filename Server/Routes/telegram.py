@@ -7,6 +7,7 @@ telegramRouter = APIRouter(prefix="/telegram")
 @telegramRouter.post("/webhook", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=1000, seconds=60))])
 async def telegram_webhook(request: Request):
     try:
+        print("Reached /webhook")
         ptb_app = request.app.state.ptb_app
         data = await request.json()
         update = Update.de_json(data=data, bot=ptb_app.bot)

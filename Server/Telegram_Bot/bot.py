@@ -12,6 +12,7 @@ import pendulum
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        print("Reached help")
         message = """
                 Welcome! Here are the available commands:
                 
@@ -28,6 +29,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        print("Reached start")
         options = [
             [InlineKeyboardButton("YES", callback_data="enable")],
             [InlineKeyboardButton("NO", callback_data="do_not_enable")],
@@ -41,6 +43,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        print("Reached stop")
         options = [
             [InlineKeyboardButton("YES", callback_data="disable")],
             [InlineKeyboardButton("NO", callback_data="do_not_disable")],
@@ -54,10 +57,12 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        print("Reached link")
         if not context.args:
             await update.message.reply_text("To link your account, please use the link provided on our website.")
         
         token = context.args[0]
+        print(f"token: {token}")
 
         try:
             telegram_id = update.message.from_user.id
@@ -85,6 +90,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def journeys(update: Update, rds: Redis = Depends(get_redis)):
     try:
+        print("Reached journeys")
         telegram_id = update.message.from_user.id
         user = await get_user_by_telegram_id(telegram_id, rds)
         journeys = await get_existing_journeys(user['id'], rds)
