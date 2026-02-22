@@ -91,19 +91,22 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
                     UPDATE users 
                     SET email = $1, username = $2, google_refresh_token = $3, last_updated_at = $4
                     WHERE id = $5
-                    RETURNING id, email, username, calendar_enabled, telegram_enabled
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
                     """
             if rds:
                 try:
-                    cached_user = await rds.get(f"user:{user_id}")
-                    if cached_user:
+                    cached_user_str = await rds.get(f"user:{user_id}")
+                    if cached_user_str:
+                        cached_user = json.loads(cached_user_str)
                         await rds.delete(f"user:{user_id}")
-                        if cached_user['telegram_id']:
-                            cached_telegram = await rds.get(f"user_telegram:{cached_user['telegram_id']}")
+                        print(f"Deleted cache user:{user_id}")
+                        if cached_user and cached_user.get('telegram_id'):
+                            cached_telegram = await rds.get(f"user_telegram:{cached_user.get('telegram_id')}")
                             if cached_telegram:
-                                await rds.delete(f"user_telegram:{cached_user['telegram_id']}")
+                                await rds.delete(f"user_telegram:{cached_user.get('telegram_id')}")
+                                print(f"Deleted cache user_telegram:{cached_user.get('telegram_id')}")
                             else:
-                                print(f"There is no cache user_telegram:{cached_user['telegram_id']} to be deleted")
+                                print(f"There is no cache user_telegram:{cached_user.get('telegram_id')} to be deleted")
                     else:
                         print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
