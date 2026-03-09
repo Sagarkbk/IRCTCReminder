@@ -38,11 +38,11 @@ async def updateJourney(body: JourneyInput, journey_id: int, user_id: int =  Dep
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
-@journeyRouter.delete("/delete", status_code=status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+@journeyRouter.delete("/delete", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def deleteJourney(journey_id: int, user_id: int =  Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        journeys = await delete_journey_by_id(user_id, journey_id, rds)
-        return {"data": journeys}
+        message = await delete_journey_by_id(user_id, journey_id, rds)
+        return {"data": [], "message": message}
     except HTTPException:
         raise
     except Exception:

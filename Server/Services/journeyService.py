@@ -252,16 +252,7 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
                 if result == "DELETE 0":
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found or deleted already")
 
-                journeys = await get_existing_journeys(user_id)
-
-                if rds and journeys:
-                    try:
-                        await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys), default=str)
-                        print(f"Cached journeys:user:{user_id}")
-                    except Exception as e:
-                        print(f"Failed to cache journeys:user:{user_id}: {e}")
-
-                return journeys
+                return "Journey deleted successfully"
     except HTTPException:
         raise
     except Exception:
