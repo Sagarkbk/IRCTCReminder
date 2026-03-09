@@ -11,7 +11,7 @@ async def create_user(userInfo, google_refresh_token, rds=None):
             query = """
                     INSERT INTO users (google_id, email, username, google_refresh_token, calendar_enabled, last_updated_at) 
                     VALUES ($1, $2, $3, $4, $5, $6) 
-                    RETURNING id, email, username, calendar_enabled, telegram_enabled
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
                     """
             result = await conn.fetchrow(
                                         query, 
@@ -50,7 +50,7 @@ async def get_user_by_id(user_id, rds=None):
 
         async with get_db_connection() as conn:
             query = """
-                    SELECT id, email, username, calendar_enabled, telegram_enabled FROM users WHERE id = $1
+                    SELECT id, email, username, calendar_enabled, telegram_enabled, telegram_id FROM users WHERE id = $1
                     """
             existingUser = await conn.fetchrow(query, user_id)
             if existingUser is None:
@@ -72,7 +72,7 @@ async def get_user_by_google_id(google_id):
     try:
         async with get_db_connection() as conn:
             query = """
-                    SELECT id, email, username, calendar_enabled, telegram_enabled FROM users WHERE google_id = $1
+                    SELECT id, email, username, calendar_enabled, telegram_enabled, telegram_id FROM users WHERE google_id = $1
                     """
             existingUser = await conn.fetchrow(query, google_id)
             if existingUser is None:
@@ -165,7 +165,7 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                     UPDATE users
                     SET calendar_enabled = $1, telegram_enabled = $2, last_updated_at = $3
                     WHERE id = $4
-                    RETURNING id, email, username, calendar_enabled, telegram_enabled
+                    RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
                     """
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)
