@@ -1,33 +1,34 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import { useAuth } from "./useAuth";
+import { useAppDispatch } from "../../store/hooks";
+import { login, setLoading, setError } from "../../store/slices/authSlice";
 
 export function useGoogleAuth() {
-  const { login, setError, setIsLoading } = useAuth();
+  const dispatch = useAppDispatch();
 
   const handleGoogleAuth = useGoogleLogin({
     onSuccess: async (codeResponse) => {
       try {
-        setIsLoading(true);
-        setError(null);
+        dispatch(setLoading(true));
+        dispatch(setError(null));
         const { code } = codeResponse;
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/google`,
           {
             authCode: code,
             clientId: import.meta.env.VITE_WEB_CLIENT_ID,
-          }
+          },
         );
         const data = response.data.data;
         const user = data.user;
         console.log(data);
-        login(user);
+        dispatch(login(user));
         localStorage.setItem("jwt_token", data.token);
       } catch (error) {
         console.error("Login/Signup failed:", error);
-        setError("Authentication failed. Please try again.");
+        dispatch(setError("Authentication failed. Please try again."));
       } finally {
-        setIsLoading(false);
+        dispatch(setLoading(false));
       }
     },
     flow: "auth-code",

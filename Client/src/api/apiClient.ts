@@ -1,4 +1,6 @@
 import axios from "axios";
+import { store } from "../store";
+import { logout } from "../store/slices/authSlice";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -15,7 +17,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 apiClient.interceptors.response.use(
@@ -23,12 +25,11 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     if (status === 401) {
-      localStorage.removeItem("jwt_token");
-      localStorage.removeItem("user");
+      store.dispatch(logout());
       window.location.href = "/";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

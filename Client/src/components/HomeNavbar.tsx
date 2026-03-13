@@ -1,11 +1,13 @@
 import { FaChevronDown } from "react-icons/fa";
-import { useAuth } from "../hooks/auth/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
 import { Link, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { logout } from "../store/slices/authSlice";
 
 export function HomeNavbar() {
-  const { user, logout } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ export function HomeNavbar() {
   }, []);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     navigate("/");
   };
 

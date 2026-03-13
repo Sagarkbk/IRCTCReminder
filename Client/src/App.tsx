@@ -3,12 +3,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Landing } from "./pages/Landing";
 import { Home } from "./pages/Home";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { AuthProvider } from "./context/AuthContext";
-import { useAuth } from "./hooks/auth/useAuth";
 import { Profile } from "./pages/Profile";
+import { useAppSelector } from "./store/hooks";
 
 const AppRoutes = () => {
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAppSelector(
+    (state) => state.auth,
+  );
 
   if (isLoading) {
     return (
@@ -44,11 +45,9 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={webClientId}>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
     </GoogleOAuthProvider>
   );
 }
