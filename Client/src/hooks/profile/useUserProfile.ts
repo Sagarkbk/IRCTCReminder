@@ -25,7 +25,7 @@ export function useUserProfile() {
       } catch (err) {
         if (isAxiosError(err)) {
           setError(
-            err.response?.data?.detail || "Failed to fetch user profile."
+            err.response?.data?.detail || "Failed to fetch user profile.",
           );
         } else {
           setError("An unexpected error occurred.");

@@ -1,8 +1,8 @@
 import { HomeNavbar } from "../components/HomeNavbar";
-import { useUserProfile } from "../hooks/profile/useUserProfile";
+import { useAppSelector } from "../store/hooks";
 
 export function Home() {
-  const { userData, error, isLoading } = useUserProfile();
+  const { user, error, isLoading } = useAppSelector((state) => state.auth);
 
   if (isLoading) {
     return <div>Loading user profile...</div>;
@@ -16,13 +16,13 @@ export function Home() {
     <>
       <HomeNavbar />
       <div className="p-8 text-white bg-black">
-        <h1 className="text-3xl font-bold">Welcome, {userData?.username}</h1>
-        {userData ? (
+        <h1 className="text-3xl font-bold">Welcome, {user?.username}</h1>
+        {user ? (
           <div className="mt-4">
-            <p>Email: {userData.email}</p>
-            <p>User ID: {userData.id}</p>
-            <p>Calendar Enabled: {userData.calendar_enabled ? "Yes" : "No"}</p>
-            <p>Telegram Enabled: {userData.telegram_enabled ? "Yes" : "No"}</p>
+            <p>Email: {user.email}</p>
+            <p>User ID: {user.id}</p>
+            <p>Calendar Enabled: {user.calendar_enabled ? "Yes" : "No"}</p>
+            <p>Telegram Enabled: {user.telegram_enabled ? "Yes" : "No"}</p>
           </div>
         ) : (
           <p>No user data found.</p>

@@ -1,10 +1,10 @@
 import { AccountInfo } from "../components/AccountInfo";
 import { AccountIntegrations } from "../components/AccountIntegrations";
 import { AccountStatistics } from "../components/AccountStatistics";
-import { useAuth } from "../hooks/auth/useAuth";
+import { useAppSelector } from "../store/hooks";
 
 export function Profile() {
-  const { user } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
 
   if (!user) {
     return null;

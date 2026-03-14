@@ -1,4 +1,4 @@
-import { type User } from "../context/AuthContext";
+import { type User } from "../store/slices/authSlice";
 import { useJourneyStats } from "../hooks/profile/useJourneyStats";
 
 export function AccountStatistics({ user }: { user: User }) {

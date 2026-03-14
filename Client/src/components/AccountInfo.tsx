@@ -1,4 +1,4 @@
-import { type User } from "../context/AuthContext";
+import { type User } from "../store/slices/authSlice";
 
 export function AccountInfo({ user }: { user: User }) {
   if (!user) {

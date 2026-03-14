@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type User } from "../context/AuthContext";
+import { type User } from "../store/slices/authSlice";
 import { useGoogleCalendarConnect } from "../hooks/integrations/useGoogleCalendarConnect";
 import { useGoogleCalendarRevoke } from "../hooks/integrations/useGoogleCalendarRevoke";
 import { useTelegramConnect } from "../hooks/integrations/useTelegramConnect";
@@ -14,7 +14,7 @@ export function AccountIntegrations({ user }: { user: User }) {
 
   const { connectCalendar, isLoading: calendarConnectLoading } =
     useGoogleCalendarConnect();
-  const { revokeCalendar, isLoading: CalendarRevokeLoading } =
+  const { revokeCalendar, isLoading: calendarRevokeLoading } =
     useGoogleCalendarRevoke();
 
   const {
@@ -39,7 +39,7 @@ export function AccountIntegrations({ user }: { user: User }) {
         onConnect={connectCalendar}
         onRevoke={revokeCalendar}
         connectLoading={calendarConnectLoading}
-        revokeLoading={CalendarRevokeLoading}
+        revokeLoading={calendarRevokeLoading}
       />
       <IntegrationCard
         cardName={"Telegram"}

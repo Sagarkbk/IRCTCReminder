@@ -1,12 +1,13 @@
 import { isAxiosError } from "axios";
 import { useState } from "react";
 import apiClient from "../../api/apiClient";
-import { useAuth } from "../auth/useAuth";
+import { useAppDispatch } from "../../store/hooks";
+import { login } from "../../store/slices/authSlice";
 
 export function useGoogleCalendarConnect() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { login } = useAuth();
+  const dispatch = useAppDispatch();
 
   const connectCalendar = async () => {
     try {
@@ -16,9 +17,9 @@ export function useGoogleCalendarConnect() {
         `${import.meta.env.VITE_API_URL}/user/preferences`,
         {
           calendar_enabled: true,
-        }
+        },
       );
-      login(response.data.data);
+      dispatch(login(response.data.data));
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.detail || "Failed to fetch user profile.");
