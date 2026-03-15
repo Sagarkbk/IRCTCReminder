@@ -1,6 +1,8 @@
 import { isAxiosError } from "axios";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import apiClient from "../../api/apiClient";
+import { useAppDispatch } from "../../store/hooks";
+import { setStats, setLoading, setError } from "../../store/slices/statsSlice";
 
 export interface Stats {
   total_journeys: number;
@@ -9,32 +11,32 @@ export interface Stats {
 }
 
 export function useJourneyStats() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const fetchJourneyStats = async () => {
       try {
-        setIsLoading(true);
+        dispatch(setLoading(true));
         const response = await apiClient.get(
-          `${import.meta.env.VITE_API_URL}/journey/journeyStats`
+          `${import.meta.env.VITE_API_URL}/journey/journeyStats`,
         );
-        setStats(response.data.data);
+        dispatch(setStats(response.data.data));
       } catch (err) {
         if (isAxiosError(err)) {
-          setError(
-            err.response?.data?.detail || "Failed to fetch user profile."
+          dispatch(
+            setError(
+              err.response?.data?.detail || "Failed to fetch user profile.",
+            ),
           );
         } else {
-          setError("An unexpected error occurred.");
+          dispatch(setError("An unexpected error occurred."));
         }
       } finally {
-        setIsLoading(false);
+        dispatch(setLoading(false));
       }
     };
     fetchJourneyStats();
-  }, []);
+  }, [dispatch]);
 
-  return { stats, error, isLoading };
+  return {};
 }

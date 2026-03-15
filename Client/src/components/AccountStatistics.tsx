@@ -1,4 +1,5 @@
 import { type User } from "../store/slices/authSlice";
+import { useAppSelector } from "../store/hooks";
 import { useJourneyStats } from "../hooks/profile/useJourneyStats";
 
 export function AccountStatistics({ user }: { user: User }) {
@@ -6,7 +7,9 @@ export function AccountStatistics({ user }: { user: User }) {
     return null;
   }
 
-  const { stats } = useJourneyStats();
+  useJourneyStats();
+
+  const stats = useAppSelector((state) => state.stats.stats);
 
   return (
     <section className="mb-8">
