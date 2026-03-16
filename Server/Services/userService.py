@@ -4,7 +4,6 @@ from fastapi import HTTPException, status, Depends
 import json
 from Services.redisService import get_redis
 from redis.asyncio import Redis
-from Services.integrationService import revoke_all_calendar_events
 
 async def create_user(userInfo, google_refresh_token, rds=None):
     try:
@@ -174,6 +173,7 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                                             pendulum.now('UTC'), user_id)
             
             if user['calendar_enabled'] and not updated_user['calendar_enabled']:
+                from Services.integrationService import revoke_all_calendar_events
                 await revoke_all_calendar_events(user_id, rds)
             
             if rds and updated_user:

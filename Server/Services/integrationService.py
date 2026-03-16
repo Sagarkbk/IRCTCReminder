@@ -135,12 +135,20 @@ async def revoke_all_calendar_events(user_id, rds = None):
     try:
         async with get_db_connection() as conn:
             query = """
-                    SELECT j.google_calendar_event_id_release_date, j.google_calendar_event_id_day_before_release, 
-                    cr.google_calendar_event_id_custom_date FROM journeys j LEFT OUTER JOIN custom_reminders cr
-                    ON j.id = cr.journey_id
+                    SELECT u.google_refresh_token,
+                    j.google_calendar_event_id_release_date, j.google_calendar_event_id_day_before_release, 
+                    cr.google_calendar_event_id_custom_date 
+                    FROM users u
+                    LEFT JOIN journeys j ON u.id = j.user_id
+                    LEFT OUTER JOIN custom_reminders cr ON j.id = cr.journey_id
                     WHERE j.user_id = $1
                     """
             journeys = await conn.fetch(query, user_id)
+
+            if not journeys:
+                return
+            
+            refresh_token = journeys[0]['google_refresh_token']
 
             event_ids = set()
 
@@ -152,11 +160,7 @@ async def revoke_all_calendar_events(user_id, rds = None):
                 if journey['google_calendar_event_id_custom_date']:
                     event_ids.add(journey['google_calendar_event_id_custom_date'])
             
-            if not event_ids:
-                return
             
-            user = await get_user_by_id(user_id, rds)
-            refresh_token = user.get('google_refresh_token')
 
             tasks = [delete_calendar_event(refresh_token, event_id) for event_id in event_ids]
             await asyncio.gather(*tasks, return_exceptions=True)
