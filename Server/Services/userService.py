@@ -4,6 +4,7 @@ from fastapi import HTTPException, status, Depends
 import json
 from Services.redisService import get_redis
 from redis.asyncio import Redis
+from Services.integrationService import revoke_all_calendar_events
 
 async def create_user(userInfo, google_refresh_token, rds=None):
     try:
@@ -89,7 +90,9 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
         async with get_db_connection() as conn:
             query = """
                     UPDATE users 
-                    SET email = $1, username = $2, google_refresh_token = $3, last_updated_at = $4
+                    SET email = $1, username = $2, 
+                    google_refresh_token = COALESCE($3, google_refresh_token), 
+                    last_updated_at = $4
                     WHERE id = $5
                     RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
                     """
@@ -169,6 +172,9 @@ async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
                     """
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)
+            
+            if user['calendar_enabled'] and not updated_user['calendar_enabled']:
+                await revoke_all_calendar_events(user_id, rds)
             
             if rds and updated_user:
                 try:
