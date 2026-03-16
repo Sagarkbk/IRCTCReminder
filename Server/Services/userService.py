@@ -2,7 +2,6 @@ from Database.connection import get_db_connection
 import pendulum
 from fastapi import HTTPException, status, Depends
 import json
-from Services.redisService import get_redis
 from redis.asyncio import Redis
 
 async def create_user(userInfo, google_refresh_token, rds=None):
@@ -136,7 +135,7 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
-async def update_user_settings(user_id, body, rds: Redis = Depends(get_redis)):
+async def update_user_settings(user_id, body, rds = None):
     try:
         async with get_db_connection() as conn:
             user = await get_user_by_id(user_id, rds)

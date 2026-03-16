@@ -3,7 +3,6 @@ from Services.userService import get_user_by_id
 import pendulum
 import secrets
 from fastapi import HTTPException, status, Depends
-from Services.redisService import get_redis
 from redis.asyncio import Redis
 import json
 from Services.googleCalendarService import delete_calendar_event
@@ -98,7 +97,7 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def validateTokenAndGetUser(token: str, rds: Redis = Depends(get_redis)):
+async def validateTokenAndGetUser(token: str, rds = None):
     try:
         print("Reached validateTokenAndGetUser")
         async with get_db_connection() as conn:

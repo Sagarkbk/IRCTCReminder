@@ -5,8 +5,6 @@ from Services.userService import update_user_settings, get_user_by_telegram_id
 from Services.journeyService import get_existing_journeys
 from Models.userModel import UserPreferencesInput
 from fastapi import HTTPException, Depends
-from Services.redisService import get_redis
-from redis.asyncio import Redis
 import httpx
 import pendulum
 
@@ -88,7 +86,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
-async def journeys(update: Update, rds: Redis = Depends(get_redis)):
+async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE, rds = None):
     try:
         print("Reached journeys")
         telegram_id = update.message.from_user.id
@@ -129,7 +127,7 @@ async def send_message(bot_app: Application, telegram_id: int, message: str):
     except Exception as e:
         return False
 
-async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds: Redis = Depends(get_redis)):
+async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds = None):
     try:
         query = update.callback_query
         if query:
