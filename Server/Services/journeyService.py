@@ -22,7 +22,7 @@ async def get_existing_journeys(user_id, rds=None):
                     print(f"Redis error: {e}")
 
             journeys_query = """
-                    SELECT * FROM journeys WHERE user_id = $1
+                    SELECT id, journey_name, journey_date, release_day_date, day_before_release_date, reminder_on_release_day, reminder_on_day_before FROM journeys WHERE user_id = $1
                     """
             
             journeys_records = await conn.fetch(journeys_query, user_id)
@@ -33,7 +33,7 @@ async def get_existing_journeys(user_id, rds=None):
             journeys_ids = [journey['id'] for journey in journeys_records]
 
             custom_reminders_query = """
-                    SELECT * FROM custom_reminders WHERE journey_id = ANY($1::bigint[])
+                    SELECT journey_id, reminder_date FROM custom_reminders WHERE journey_id = ANY($1::bigint[])
                     """
             
             custom_reminders = await conn.fetch(custom_reminders_query, journeys_ids)
@@ -158,8 +158,8 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         CalendarEvent(
                             summary=f"Hi! Tatkal tickets will be release today for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
                             desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=records[0]['release_day_datelease_date'],
-                            end_time=f"{pendulum.parse(records[0]['release_day_datelease_date']).add(days=1)}"
+                            start_time=records[0]['release_day_date'],
+                            end_time=f"{pendulum.parse(records[0]['release_day_date']).add(days=1)}"
                         ))
                     
                 if user['calendar_enabled'] and records[0]['google_calendar_event_id_day_before_release']:
@@ -262,9 +262,9 @@ async def get_journey_by_id(user_id, journey_id):
     try:
         async with get_db_connection() as conn:
             query = """
-                    SELECT j.id as journey_id, j.journey_name, j.journey_date, j.google_calendar_event_id_release_date, j.google_calendar_event_id_day_before_release, j.release_day_date,
+                    SELECT j.id as journey_id, j.journey_name, j.journey_date, j.release_day_date,
                     j.day_before_release_date, j.reminder_on_release_day, j.reminder_on_day_before,
-                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.is_sent, cr.google_calendar_event_id_custom_date
+                    cr.id as custom_reminder_id, cr.journey_id as custom_reminder_journey_id, cr.reminder_date, cr.is_sent
                     FROM journeys j LEFT JOIN custom_reminders cr
                     ON j.id = cr.journey_id
                     WHERE j.user_id = $1 AND j.id = $2
@@ -283,8 +283,6 @@ async def get_journey_by_id(user_id, journey_id):
                         "id" : record['journey_id'],
                         "journey_name" : record['journey_name'],
                         "journey_date" : record['journey_date'],
-                        "google_calendar_event_id_release_date": record['google_calendar_event_id_release_date'],
-                        "google_calendar_event_id_day_before_release": record['google_calendar_event_id_day_before_release'],
                         "release_day_date" : record['release_day_date'],
                         "day_before_release_date" : record['day_before_release_date'],
                         "reminder_on_release_day" : record['reminder_on_release_day'],
@@ -298,7 +296,6 @@ async def get_journey_by_id(user_id, journey_id):
                         "journey_id" : record['custom_reminder_journey_id'],
                         "reminder_date" : record['reminder_date'],
                         "is_sent" : record['is_sent'],
-                        "google_calendar_event_id_custom_date": record['google_calendar_event_id_custom_date']
                     })
 
             journey['custom_reminders'] = custom_reminders
