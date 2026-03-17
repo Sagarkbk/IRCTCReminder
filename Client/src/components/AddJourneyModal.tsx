@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { FaTrash } from "react-icons/fa";
+import { useJourney } from "../hooks/journey/useJourney";
 
 interface AddJourneyModalProps {
   isOpen: boolean;
@@ -60,6 +61,30 @@ export function AddJourneyModal({ isOpen, onClose }: AddJourneyModalProps) {
     setReminderOnDayBefore(true);
     setCustomReminders([]);
     onClose();
+  };
+
+  const { addNewJourney, isLoading } = useJourney();
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      alert("Please enter a journey name");
+      return;
+    }
+    if (!date) {
+      alert("Please select a journey date");
+      return;
+    }
+
+    await addNewJourney({
+      journey_name: name,
+      journey_date: date,
+      reminder_on_release_day: reminderOnReleaseDay,
+      reminder_on_day_before: reminderOnDayBefore,
+      custom_reminders: customReminders.filter((d) => d !== ""),
+    });
+    console.log(customReminders);
+
+    handleClose();
   };
 
   return (
@@ -181,8 +206,13 @@ export function AddJourneyModal({ isOpen, onClose }: AddJourneyModalProps) {
           >
             Cancel
           </button>
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-all">
-            Add Journey
+          <button
+            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-all 
+                ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? "Adding..." : "Add Journey"}
           </button>
         </div>
       </div>
