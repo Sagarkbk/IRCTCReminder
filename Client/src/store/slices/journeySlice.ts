@@ -1,11 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-interface CustomReminder {
+export interface CustomReminder {
   journey_id: number;
   reminder_date: string;
 }
 
-interface Journey {
+export interface Journey {
   id: number;
   journey_name: string;
   journey_date: string;

@@ -1,4 +1,5 @@
 import { HomeNavbar } from "../components/HomeNavbar";
+import { JourneyList } from "../components/JourneyList";
 import { useAppSelector } from "../store/hooks";
 
 export function Home() {
@@ -13,21 +14,20 @@ export function Home() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-900">
       <HomeNavbar />
-      <div className="p-8 text-white bg-black">
-        <h1 className="text-3xl font-bold">Welcome, {user?.username}</h1>
-        {user ? (
-          <div className="mt-4">
-            <p>Email: {user.email}</p>
-            <p>User ID: {user.id}</p>
-            <p>Calendar Enabled: {user.calendar_enabled ? "Yes" : "No"}</p>
-            <p>Telegram Enabled: {user.telegram_enabled ? "Yes" : "No"}</p>
-          </div>
-        ) : (
-          <p>No user data found.</p>
-        )}
-      </div>
-    </>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-teal-400 text-transparent bg-clip-text">
+            Welcome, {user?.username}
+          </h1>
+          <p className="text-slate-400 mt-2">
+            Manage your train journey reminders in one place.
+          </p>
+        </div>
+
+        <JourneyList />
+      </main>
+    </div>
   );
 }
