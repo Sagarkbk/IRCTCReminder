@@ -5,6 +5,6 @@ from typing import List, Optional
 class JourneyInput(BaseModel):
     journey_name         : str
     journey_date         : date
-    remind_on_release_day: bool
-    remind_on_day_before : bool
+    reminder_on_release_day: bool
+    reminder_on_day_before : bool
     custom_dates         : List[date] = Field(default_factory=list)

@@ -92,7 +92,7 @@ async def add_journey(body, user_id, rds=None):
             day_before_release_date = release_day_date.subtract(days=1)
 
             async with conn.transaction():
-                new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.remind_on_release_day, body.remind_on_day_before, current_time)
+                new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.reminder_on_release_day, body.reminder_on_day_before, current_time)
 
                 if body.custom_dates:
                     records_to_insert = [(new_journey['id'], date) for date in body.custom_dates]
