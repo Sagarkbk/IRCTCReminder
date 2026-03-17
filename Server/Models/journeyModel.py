@@ -7,4 +7,4 @@ class JourneyInput(BaseModel):
     journey_date         : date
     reminder_on_release_day: bool
     reminder_on_day_before : bool
-    custom_dates         : List[date] = Field(default_factory=list)
+    custom_reminders         : List[date] = Field(default_factory=list)

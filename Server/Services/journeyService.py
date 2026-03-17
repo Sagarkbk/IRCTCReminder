@@ -88,14 +88,15 @@ async def add_journey(body, user_id, rds=None):
                             """
             
             current_time = pendulum.now('UTC')
-            release_day_date = pendulum.parse(body.journey_date).date().subtract(days=60)
+            release_day_date = pendulum.parse(str(body.journey_date)).subtract(days=60)
             day_before_release_date = release_day_date.subtract(days=1)
+            print(body)
 
             async with conn.transaction():
                 new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.reminder_on_release_day, body.reminder_on_day_before, current_time)
 
-                if body.custom_dates:
-                    records_to_insert = [(new_journey['id'], date) for date in body.custom_dates]
+                if body.custom_reminders:
+                    records_to_insert = [(new_journey['id'], date) for date in body.custom_reminders]
                     await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date'], records = records_to_insert)
 
                 journey_id = new_journey['id']
