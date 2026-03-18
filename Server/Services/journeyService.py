@@ -52,7 +52,7 @@ async def get_existing_journeys(user_id, rds=None):
 
             if rds and journeys:
                 try:
-                    await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys), default=str)
+                    await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys, default=str))
                     print(f"Cached journeys:user:{user_id}")
                 except Exception as e:
                     print(f"Failed to cache journeys:user:{user_id}: {e}")
