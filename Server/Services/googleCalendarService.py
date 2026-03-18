@@ -43,8 +43,8 @@ async def create_calendar_event(refresh_token: str, details: CalendarEvent):
             },
             "reminders": details.reminders
         }
-        calendar_service = get_calendar_service(refresh_token)
-        event = calendar_service.events().insert(calenderId='primary', body=event).execute()
+        calendar_service = await get_calendar_service(refresh_token)
+        event = calendar_service.events().insert(calendarId='primary', body=event).execute()
         return event['id']
     except HTTPException:
         raise
@@ -66,8 +66,8 @@ async def update_calendar_event(refresh_token: str, eventId: str, details: Calen
             },
             "reminders": details.reminders
         }
-        calendar_service = get_calendar_service(refresh_token)
-        event = calendar_service.events().update(calenderId='primary', eventId=eventId, body=event).execute()
+        calendar_service = await get_calendar_service(refresh_token)
+        event = calendar_service.events().update(calendarId='primary', eventId=eventId, body=event).execute()
         return True
     except HTTPException:
         raise
@@ -76,8 +76,8 @@ async def update_calendar_event(refresh_token: str, eventId: str, details: Calen
 
 async def delete_calendar_event(refresh_token:str, eventId: str):
     try:
-        calendar_service = get_calendar_service(refresh_token)
-        event = calendar_service.events().delete(calenderId='primary', eventId=eventId).execute()
+        calendar_service = await get_calendar_service(refresh_token)
+        event = calendar_service.events().delete(calendarId='primary', eventId=eventId).execute()
         return True
     except HTTPException:
         raise
