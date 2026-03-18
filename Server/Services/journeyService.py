@@ -159,8 +159,8 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         CalendarEvent(
                             summary=f"Hi! Tatkal tickets will be release today for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
                             desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=records[0]['release_day_date'],
-                            end_time=f"{pendulum.parse(records[0]['release_day_date']).add(days=1)}"
+                            start_time=pendulum.instance(records[0]['release_day_date']).at(8, 0, 0),
+                            end_time=pendulum.instance(records[0]['release_day_date']).at(9, 0, 0),
                         ))
                     
                 if user['calendar_enabled'] and records[0]['google_calendar_event_id_day_before_release']:
@@ -170,8 +170,8 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         CalendarEvent(
                             summary=f"Hi! Tatkal tickets will be release tomorrow for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
                             desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=records[0]['day_before_release_date'],
-                            end_time=f"{pendulum.parse(records[0]['day_before_release_date']).add(days=1)}"
+                            start_time=pendulum.instance(records[0]['day_before_release_date']).at(8, 0, 0),
+                            end_time=pendulum.instance(records[0]['day_before_release_date']).at(9, 0, 0),
                         ))
 
                 existing_custom_reminders = [{"rd":record['reminder_date'], "eid":record['google_calendar_event_id_custom_date']} for record in records]

@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import datetime
 
 class CalendarEvent(BaseModel):
     summary: str
     desc: str
-    start_time: date
-    end_time: date
+    start_time: datetime
+    end_time: datetime
     reminders: dict

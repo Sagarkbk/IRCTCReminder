@@ -34,11 +34,11 @@ async def create_calendar_event(refresh_token: str, details: CalendarEvent):
             "summary": details.summary,
             "description": details.desc,
             "start":{
-                "dateTime": details.start_time,
+                "dateTime": details.start_time.isoformat(),
                 "timeZone": "Asia/Kolkata",
             },
             "end":{
-                "dateTime": details.end_time,
+                "dateTime": details.end_time.isoformat(),
                 "timeZone": "Asia/Kolkata",
             },
             "reminders": details.reminders
@@ -48,7 +48,8 @@ async def create_calendar_event(refresh_token: str, details: CalendarEvent):
         return event['id']
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def update_calendar_event(refresh_token: str, eventId: str, details: CalendarEvent):
@@ -57,11 +58,11 @@ async def update_calendar_event(refresh_token: str, eventId: str, details: Calen
             "summary": details.summary,
             "description": details.desc,
             "start":{
-                "dateTime": details.start_time,
+                "dateTime": details.start_time.isoformat(),
                 "timeZone": "Asia/Kolkata",
             },
             "end":{
-                "dateTime": details.end_time,
+                "dateTime": details.end_time.isoformat(),
                 "timeZone": "Asia/Kolkata",
             },
             "reminders": details.reminders
