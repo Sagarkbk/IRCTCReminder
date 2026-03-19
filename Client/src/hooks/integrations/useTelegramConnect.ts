@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import apiClient from "../../api/apiClient";
 import { isAxiosError } from "axios";
 import { useAppDispatch } from "../../store/hooks";
@@ -8,9 +8,10 @@ export function useTelegramConnect() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const [shouldRefetch, setShouldRefetch] = useState(false);
   const dispatch = useAppDispatch();
 
-  const reFetchUser = async () => {
+  const reFetchUser = useCallback(async () => {
     try {
       const response = await apiClient.get(
         `${import.meta.env.VITE_API_URL}/user/profile`,
@@ -19,19 +20,23 @@ export function useTelegramConnect() {
     } catch (err) {
       console.error("Failed to refresh user profile:", err);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
+    if (!shouldRefetch) return;
+
     const handleFocus = () => {
       reFetchUser();
+      setShouldRefetch(false);
     };
     window.addEventListener("focus", handleFocus);
-    return () => document.removeEventListener("focus", handleFocus);
-  }, []);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [shouldRefetch]);
 
   const generateToken = async () => {
     try {
       setIsLoading(true);
+      setShouldRefetch(true);
       setError(null);
       setToken(null);
       const response = await apiClient.post(
