@@ -5,6 +5,7 @@ import { Home } from "./pages/Home";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Profile } from "./pages/Profile";
 import { useAppSelector } from "./store/hooks";
+import { useEffect } from "react";
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, error } = useAppSelector(
@@ -42,6 +43,32 @@ const AppRoutes = () => {
 
 function App() {
   const webClientId = import.meta.env.VITE_WEB_CLIENT_ID || "";
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        localStorage.setItem("last_active_time", Date.now().toString());
+      } else if (document.visibilityState === "visible") {
+        const lastActiveTime = localStorage.getItem("last_active_time");
+        if (lastActiveTime) {
+          const inactiveDuration = Date.now() - parseInt(lastActiveTime, 10);
+          const thirtyMinutes = 30 * 60 * 1000;
+
+          if (inactiveDuration > thirtyMinutes) {
+            console.log(
+              "User was inactive for >30 minutes. Reloading for fresh session...",
+            );
+            localStorage.removeItem("last_active_time");
+            window.location.reload();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return (
     <GoogleOAuthProvider clientId={webClientId}>
