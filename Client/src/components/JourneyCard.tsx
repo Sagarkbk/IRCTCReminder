@@ -1,9 +1,10 @@
-import { FaTrain, FaCalendarAlt } from "react-icons/fa";
+import { FaTrain, FaCalendarAlt, FaTrash } from "react-icons/fa";
 import { type Journey } from "../store/slices/journeySlice";
 interface JourneyCardProps {
   journey: Journey;
+  onDelete: (id: number) => void;
 }
-export function JourneyCard({ journey }: JourneyCardProps) {
+export function JourneyCard({ journey, onDelete }: JourneyCardProps) {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-IN", {
       day: "numeric",
@@ -13,7 +14,18 @@ export function JourneyCard({ journey }: JourneyCardProps) {
   };
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700 hover:border-indigo-500/50 transition-all rounded-xl p-5 shadow-lg flex flex-col group">
+    <div className="bg-slate-800/50 border border-slate-700 hover:border-indigo-500/50 transition-all rounded-xl p-5 shadow-lg flex flex-col group relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(journey.id);
+        }}
+        className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+        title="Delete Journey"
+      >
+        <FaTrash size={14} />
+      </button>
+
       <div className="flex items-center gap-3 mb-4">
         <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400">
           <FaTrain size={18} />

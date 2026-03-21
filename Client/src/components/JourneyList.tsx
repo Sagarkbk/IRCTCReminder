@@ -5,7 +5,8 @@ import { FaPlus } from "react-icons/fa";
 import { AddJourneyModal } from "./AddJourneyModal";
 
 export function JourneyList() {
-  const { journeys, fetchJourneys, isLoading, error } = useJourney();
+  const { journeys, fetchJourneys, removeExistingJourney, isLoading, error } =
+    useJourney();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
@@ -47,7 +48,11 @@ export function JourneyList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {journeys.map((journey) => (
-            <JourneyCard key={journey.id} journey={journey} />
+            <JourneyCard
+              key={journey.id}
+              journey={journey}
+              onDelete={removeExistingJourney}
+            />
           ))}
         </div>
       )}
