@@ -80,7 +80,7 @@ export function AddJourneyModal({ isOpen, onClose }: AddJourneyModalProps) {
       journey_date: date,
       reminder_on_release_day: reminderOnReleaseDay,
       reminder_on_day_before: reminderOnDayBefore,
-      custom_reminders: customReminders.filter((d) => d !== ""),
+      custom_reminders: [...new Set(customReminders.filter((d) => d !== ""))],
     });
     console.log(customReminders);
 
