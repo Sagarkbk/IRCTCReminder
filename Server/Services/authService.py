@@ -36,7 +36,7 @@ async def userVerification(body, rds=None):
         credentials = flow.credentials
         google_refresh_token = credentials.refresh_token
         
-        userInfo = id_token.verify_oauth2_token(credentials.id_token, Request(), WEB_CLIENT_ID)
+        userInfo = id_token.verify_oauth2_token(credentials.id_token, Request(), WEB_CLIENT_ID, clock_skew_in_seconds=5)
 
         try:
             existingUser = await get_user_by_google_id(userInfo.get('sub'))
