@@ -3,11 +3,28 @@ import { useJourney } from "../hooks/journey/useJourney";
 import { JourneyCard } from "./JourneyCard";
 import { FaPlus } from "react-icons/fa";
 import { AddJourneyModal } from "./AddJourneyModal";
+import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 
 export function JourneyList() {
   const { journeys, fetchJourneys, removeExistingJourney, isLoading, error } =
     useJourney();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
+
+  const openDeleteModal = (id: number) => {
+    setJourneyToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (journeyToDelete !== null) {
+      await removeExistingJourney(journeyToDelete);
+      setIsDeleteModalOpen(false);
+      setJourneyToDelete(null);
+    }
+  };
 
   useEffect(() => {
     fetchJourneys();
@@ -51,7 +68,7 @@ export function JourneyList() {
             <JourneyCard
               key={journey.id}
               journey={journey}
-              onDelete={removeExistingJourney}
+              onDelete={openDeleteModal}
             />
           ))}
         </div>
@@ -60,6 +77,12 @@ export function JourneyList() {
       <AddJourneyModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
       />
     </div>
   );
