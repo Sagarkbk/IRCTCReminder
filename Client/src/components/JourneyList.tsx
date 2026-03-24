@@ -4,6 +4,8 @@ import { JourneyCard } from "./JourneyCard";
 import { FaPlus } from "react-icons/fa";
 import { AddJourneyModal } from "./AddJourneyModal";
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
+import { type Journey } from "../store/slices/journeySlice";
+import { EditJourneyModal } from "./EditJourneyModal";
 
 export function JourneyList() {
   const { journeys, fetchJourneys, removeExistingJourney, isLoading, error } =
@@ -12,6 +14,14 @@ export function JourneyList() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [journeyToEdit, setJourneyToEdit] = useState<Journey | null>(null);
+
+  const openEditModal = (journey: Journey) => {
+    setJourneyToEdit(journey);
+    setIsEditModalOpen(true);
+  };
 
   const openDeleteModal = (id: number) => {
     setJourneyToDelete(id);
@@ -69,6 +79,7 @@ export function JourneyList() {
               key={journey.id}
               journey={journey}
               onDelete={openDeleteModal}
+              onEdit={openEditModal}
             />
           ))}
         </div>
@@ -83,6 +94,12 @@ export function JourneyList() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
+      />
+
+      <EditJourneyModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        journey={journeyToEdit}
       />
     </div>
   );
