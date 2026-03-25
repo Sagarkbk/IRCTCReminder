@@ -49,7 +49,7 @@ async def get_user_by_id(user_id, rds=None):
 
         async with get_db_connection() as conn:
             query = """
-                    SELECT id, email, username, calendar_enabled, telegram_enabled, telegram_id FROM users WHERE id = $1
+                    SELECT id, email, username, google_refresh_token, calendar_enabled, telegram_enabled, telegram_id FROM users WHERE id = $1
                     """
             existingUser = await conn.fetchrow(query, user_id)
             if existingUser is None:
@@ -92,7 +92,7 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
                     google_refresh_token = COALESCE($3, google_refresh_token), 
                     last_updated_at = $4
                     WHERE id = $5
-                    RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
+                    RETURNING id, email, username, google_refresh_token, calendar_enabled, telegram_enabled, telegram_id
                     """
             if rds:
                 try:
@@ -166,7 +166,7 @@ async def update_user_settings(user_id, body, rds = None):
                     UPDATE users
                     SET calendar_enabled = $1, telegram_enabled = $2, last_updated_at = $3
                     WHERE id = $4
-                    RETURNING id, email, username, calendar_enabled, telegram_enabled, telegram_id
+                    RETURNING id, email, username, google_refresh_token, calendar_enabled, telegram_enabled, telegram_id
                     """
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)

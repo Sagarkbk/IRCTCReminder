@@ -7,6 +7,7 @@ from Models.googleCalendarModel import CalendarEvent
 from Services.googleCalendarService import update_calendar_event, delete_calendar_event
 from Services.userService import get_user_by_id
 import asyncio
+from datetime import datetime
 
 async def get_existing_journeys(user_id, rds=None):
     try:
@@ -159,8 +160,16 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         CalendarEvent(
                             summary=f"Hi! Tatkal tickets will be release today for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
                             desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=pendulum.instance(records[0]['release_day_date']).at(8, 0, 0),
-                            end_time=pendulum.instance(records[0]['release_day_date']).at(9, 0, 0),
+                            start_time=pendulum.instance(datetime.combine(records[0]['release_day_date'], datetime.min.time())).at(8, 0, 0),
+                            end_time=pendulum.instance(datetime.combine(records[0]['release_day_date'], datetime.min.time())).at(9, 0, 0),
+                            reminders={
+                                        "useDefault": False,
+                                        "overrides": [
+                                            {"method": "popup", "minutes": 60},
+                                            {"method": "popup", "minutes": 10},
+                                            {"method": "popup", "minutes": 0},
+                                        ]
+                                    }
                         ))
                     
                 if user['calendar_enabled'] and records[0]['google_calendar_event_id_day_before_release']:
@@ -170,23 +179,34 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         CalendarEvent(
                             summary=f"Hi! Tatkal tickets will be release tomorrow for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
                             desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=pendulum.instance(records[0]['day_before_release_date']).at(8, 0, 0),
-                            end_time=pendulum.instance(records[0]['day_before_release_date']).at(9, 0, 0),
+                            start_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(8, 0, 0),
+                            end_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(9, 0, 0),
+                            reminders={
+                                        "useDefault": False,
+                                        "overrides": [
+                                            {"method": "popup", "minutes": 60},
+                                            {"method": "popup", "minutes": 10},
+                                            {"method": "popup", "minutes": 0},
+                                        ]
+                                    }
                         ))
-
+                
                 existing_custom_reminders = [{"rd":record['reminder_date'], "eid":record['google_calendar_event_id_custom_date']} for record in records]
+
+                existing_custom_reminders_dates = {rem['rd'] for rem in existing_custom_reminders if rem['rd']}
+                
                 reminders_to_be_deleted = []
                 reminders_to_be_inserted = []
                 calendar_event_ids_to_be_deleted = []
-
+    
                 for rem in existing_custom_reminders:
-                    if rem['rd'] not in body.custom_reminders:
+                    if rem['rd'] and rem['rd'] not in body.custom_reminders:
                         reminders_to_be_deleted.append(rem['rd'])
                         if rem['eid']:
                             calendar_event_ids_to_be_deleted.append(rem['eid'])
-                
+                    
                 for date in body.custom_reminders:
-                    if date not in existing_custom_reminders:
+                    if date not in existing_custom_reminders_dates:
                         reminders_to_be_inserted.append(date)
                 
                 if reminders_to_be_deleted:
