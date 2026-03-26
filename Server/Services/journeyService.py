@@ -148,18 +148,24 @@ async def update_journey(body, user_id, journey_id, rds=None):
                                         UPDATE journeys
                                         SET reminder_on_release_day = $1,
                                         reminder_on_day_before = $2,
-                                        journey_name = $3
+                                        journey_name = $3,
+                                        google_calendar_event_id_release_date = CASE WHEN $1 = FALSE THEN NULL ELSE google_calendar_event_id_release_date END,
+                                        google_calendar_event_id_day_before_release = CASE WHEN $2 = FALSE THEN NULL ELSE google_calendar_event_id_day_before_release END
                                         WHERE id = $4
                                     """
                 await conn.execute(update_journey_query, body.reminder_on_release_day, body.reminder_on_day_before, journey_name, journey_id)
                 user = await get_user_by_id(user_id, rds)
                 if user['calendar_enabled'] and records[0]['google_calendar_event_id_release_date']:
-                    await update_calendar_event(
+                    if not body.reminder_on_release_day:
+                        await delete_calendar_event(user['google_refresh_token'],
+                        records[0]['google_calendar_event_id_release_date'])
+                    else:
+                        await update_calendar_event(
                         user['google_refresh_token'],
                         records[0]['google_calendar_event_id_release_date'],
                         CalendarEvent(
-                            summary=f"Hi! Tatkal tickets will be release today for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
+                            summary=f"Hi! Tatkal tickets will be release today for your journey {journey_name} on {records[0]['journey_date']}",
+                            desc=f"Today is the tatkal tickets release day for your journey {journey_name} on {records[0]['journey_date']}",
                             start_time=pendulum.instance(datetime.combine(records[0]['release_day_date'], datetime.min.time())).at(8, 0, 0),
                             end_time=pendulum.instance(datetime.combine(records[0]['release_day_date'], datetime.min.time())).at(9, 0, 0),
                             reminders={
@@ -173,23 +179,27 @@ async def update_journey(body, user_id, journey_id, rds=None):
                         ))
                     
                 if user['calendar_enabled'] and records[0]['google_calendar_event_id_day_before_release']:
-                    await update_calendar_event(
-                        user['google_refresh_token'],
-                        records[0]['google_calendar_event_id_day_before_release'],
-                        CalendarEvent(
-                            summary=f"Hi! Tatkal tickets will be release tomorrow for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            desc=f"Today is the tatkal tickets release day for your journey {records[0]['journey_name']} on {records[0]['journey_date']}",
-                            start_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(8, 0, 0),
-                            end_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(9, 0, 0),
-                            reminders={
-                                        "useDefault": False,
-                                        "overrides": [
-                                            {"method": "popup", "minutes": 60},
-                                            {"method": "popup", "minutes": 10},
-                                            {"method": "popup", "minutes": 0},
-                                        ]
-                                    }
-                        ))
+                    if not body.reminder_on_day_before:
+                        await delete_calendar_event(user['google_refresh_token'],
+                        records[0]['google_calendar_event_id_day_before_release'])
+                    else:
+                        await update_calendar_event(
+                            user['google_refresh_token'],
+                            records[0]['google_calendar_event_id_day_before_release'],
+                            CalendarEvent(
+                                summary=f"Hi! Tatkal tickets will be release tomorrow for your journey {journey_name} on {records[0]['journey_date']}",
+                                desc=f"Tomorrow is the tatkal tickets release day for your journey {journey_name} on {records[0]['journey_date']}",
+                                start_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(8, 0, 0),
+                                end_time=pendulum.instance(datetime.combine(records[0]['day_before_release_date'], datetime.min.time())).at(9, 0, 0),
+                                reminders={
+                                            "useDefault": False,
+                                            "overrides": [
+                                                {"method": "popup", "minutes": 60},
+                                                {"method": "popup", "minutes": 10},
+                                                {"method": "popup", "minutes": 0},
+                                            ]
+                                        }
+                            ))
                 
                 existing_custom_reminders = [{"rd":record['reminder_date'], "eid":record['google_calendar_event_id_custom_date']} for record in records]
 
@@ -219,6 +229,27 @@ async def update_journey(body, user_id, journey_id, rds=None):
                 if reminders_to_be_inserted:
                     records_to_insert = [(journey_id, date) for date in reminders_to_be_inserted]
                     await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date'], records = records_to_insert)
+
+                for rem in existing_custom_reminders:
+                    if rem['rd'] and rem['rd'] in body.custom_reminders and rem['eid']:
+                        await update_calendar_event(
+                                user['google_refresh_token'],
+                                rem['eid'],
+                                CalendarEvent(
+                                    summary=f"IRCTC Tickets Booking for {journey_name} on {records[0]['journey_date']}",
+                                    desc=f"Hii! This is your custom reminder for booking train tickets for your {journey_name} on {records[0]['journey_date']}",
+                                    start_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(8, 0, 0),
+                                    end_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(9, 0, 0),
+                                    reminders={
+                                        "useDefault": False,
+                                        "overrides": [
+                                            {"method": "popup", "minutes": 60},
+                                            {"method": "popup", "minutes": 10},
+                                            {"method": "popup", "minutes": 0},
+                                        ]
+                                    }
+                                )
+                            )
 
         journey = await get_journey_by_id(user_id, journey_id)
         return journey
