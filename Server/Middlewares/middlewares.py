@@ -32,12 +32,8 @@ async def authMiddleware(authorization = Header(...), rds: Redis = Depends(get_r
                             )
 
         return user['id']
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-                            status_code=status.HTTP_401_UNAUTHORIZED, 
-                            detail="Unauthorized User"
-                        )
-    except jwt.ExpiredSignatureError:
+
+    except (jwt.PyJWTError, KeyError):
         raise HTTPException(
                             status_code=status.HTTP_401_UNAUTHORIZED, 
                             detail="Unauthorized User"
