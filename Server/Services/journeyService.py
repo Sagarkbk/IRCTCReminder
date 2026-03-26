@@ -272,7 +272,7 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
                 await conn.execute("DELETE FROM journeys WHERE id = $1 AND user_id = $2", journey_id, user_id)
 
             user = await get_user_by_id(user_id, rds)
-            if user['calendar_enabled'] and event_ids:
+            if event_ids:
                 tasks = [delete_calendar_event(user['google_refresh_token'], eventId) for eventId in event_ids]
                 await asyncio.gather(*tasks, return_exceptions=True)
 
