@@ -80,20 +80,20 @@ async def add_journey(body, user_id, rds=None):
         journey = None
         journey_id = None
         async with get_db_connection() as conn:
-
-            journey_query = """
-                                INSERT INTO journeys
-                                (user_id, journey_name, journey_date, release_day_date, day_before_release_date, reminder_on_release_day, reminder_on_day_before, last_updated_at)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                                RETURNING id
-                            """
-            
-            current_time = pendulum.now('UTC')
-            release_day_date = pendulum.parse(str(body.journey_date)).subtract(days=60)
-            day_before_release_date = release_day_date.subtract(days=1)
-            print(body)
-
             async with conn.transaction():
+
+                journey_query = """
+                                    INSERT INTO journeys
+                                    (user_id, journey_name, journey_date, release_day_date, day_before_release_date, reminder_on_release_day, reminder_on_day_before, last_updated_at)
+                                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                                    RETURNING id
+                                """
+                
+                current_time = pendulum.now('UTC')
+                release_day_date = pendulum.parse(str(body.journey_date)).subtract(days=60)
+                day_before_release_date = release_day_date.subtract(days=1)
+                print(body)
+
                 new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.reminder_on_release_day, body.reminder_on_day_before, current_time)
 
                 if body.custom_reminders:
@@ -140,8 +140,11 @@ async def update_journey(body, user_id, journey_id, rds=None):
             
             journey_name = records[0]['journey_name']
 
-            if body.journey_name is not None:
+            name_changed = False
+   
+            if body.journey_name is not None and body.journey_name != records[0]['journey_name']:
                 journey_name = body.journey_name
+                name_changed = True                
             
             async with conn.transaction():
                 update_journey_query = """
@@ -159,7 +162,7 @@ async def update_journey(body, user_id, journey_id, rds=None):
                     if not body.reminder_on_release_day:
                         await delete_calendar_event(user['google_refresh_token'],
                         records[0]['google_calendar_event_id_release_date'])
-                    else:
+                    elif name_changed:
                         await update_calendar_event(
                         user['google_refresh_token'],
                         records[0]['google_calendar_event_id_release_date'],
@@ -182,7 +185,7 @@ async def update_journey(body, user_id, journey_id, rds=None):
                     if not body.reminder_on_day_before:
                         await delete_calendar_event(user['google_refresh_token'],
                         records[0]['google_calendar_event_id_day_before_release'])
-                    else:
+                    elif name_changed:
                         await update_calendar_event(
                             user['google_refresh_token'],
                             records[0]['google_calendar_event_id_day_before_release'],
@@ -229,27 +232,28 @@ async def update_journey(body, user_id, journey_id, rds=None):
                 if reminders_to_be_inserted:
                     records_to_insert = [(journey_id, date) for date in reminders_to_be_inserted]
                     await conn.copy_records_to_table('custom_reminders', columns = ['journey_id', 'reminder_date'], records = records_to_insert)
-
-                for rem in existing_custom_reminders:
-                    if rem['rd'] and rem['rd'] in body.custom_reminders and rem['eid']:
-                        await update_calendar_event(
-                                user['google_refresh_token'],
-                                rem['eid'],
-                                CalendarEvent(
-                                    summary=f"IRCTC Tickets Booking for {journey_name} on {records[0]['journey_date']}",
-                                    desc=f"Hii! This is your custom reminder for booking train tickets for your {journey_name} on {records[0]['journey_date']}",
-                                    start_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(8, 0, 0),
-                                    end_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(9, 0, 0),
-                                    reminders={
-                                        "useDefault": False,
-                                        "overrides": [
-                                            {"method": "popup", "minutes": 60},
-                                            {"method": "popup", "minutes": 10},
-                                            {"method": "popup", "minutes": 0},
-                                        ]
-                                    }
+                
+                if name_changed:
+                    for rem in existing_custom_reminders:
+                        if rem['rd'] and rem['rd'] in body.custom_reminders and rem['eid']:
+                            await update_calendar_event(
+                                    user['google_refresh_token'],
+                                    rem['eid'],
+                                    CalendarEvent(
+                                        summary=f"IRCTC Tickets Booking for {journey_name} on {records[0]['journey_date']}",
+                                        desc=f"Hii! This is your custom reminder for booking train tickets for your {journey_name} on {records[0]['journey_date']}",
+                                        start_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(8, 0, 0),
+                                        end_time=pendulum.instance(datetime.combine(rem['rd'], datetime.min.time())).at(9, 0, 0),
+                                        reminders={
+                                            "useDefault": False,
+                                            "overrides": [
+                                                {"method": "popup", "minutes": 60},
+                                                {"method": "popup", "minutes": 10},
+                                                {"method": "popup", "minutes": 0},
+                                            ]
+                                        }
+                                    )
                                 )
-                            )
 
         journey = await get_journey_by_id(user_id, journey_id)
         return journey
