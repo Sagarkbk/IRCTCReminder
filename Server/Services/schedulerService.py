@@ -133,7 +133,7 @@ async def send_telegram_reminders(ptb_app):
     try:
         async with get_db_connection() as conn:
 
-            today = pendulum.now('UTC').date()
+            today = pendulum.now('Asia/Kolkata').date()
 
             get_all_standard_reminders = """
                                         SELECT u.id as uid, u.telegram_id, u.calendar_enabled, u.telegram_enabled, j.* 

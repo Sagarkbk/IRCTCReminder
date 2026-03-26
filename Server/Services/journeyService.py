@@ -338,7 +338,7 @@ async def get_journey_stats(user_id):
                     FROM journeys 
                     WHERE user_id = $2;
                     """
-            today = pendulum.now('UTC')
+            today = pendulum.now('Asia/Kolkata').date()
             stats = await conn.fetchrow(query, today, user_id)
             return dict(stats)
     except HTTPException:
