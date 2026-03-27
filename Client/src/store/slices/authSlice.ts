@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
   username: string;
   calendar_enabled: boolean;
   telegram_enabled: boolean;
-  telegram_id: string | null;
+  telegram_id: number | null;
 }
 
 interface AuthState {

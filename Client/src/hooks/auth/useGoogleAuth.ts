@@ -22,8 +22,22 @@ export function useGoogleAuth() {
         const data = response.data.data;
         const user = data.user;
         console.log(data);
-        dispatch(login(user));
         localStorage.setItem("jwt_token", data.token);
+        dispatch(login(user));
+        console.log(
+          "DEBUG: Frontend User ID Type:",
+          typeof user.id,
+          "value:",
+          user.id,
+        );
+        if (user.telegram_id) {
+          console.log(
+            "DEBUG: Frontend Telegram ID Type:",
+            typeof user.telegram_id,
+            "value:",
+            user.telegram_id,
+          );
+        }
       } catch (error) {
         console.error("Login/Signup failed:", error);
         dispatch(setError("Authentication failed. Please try again."));
