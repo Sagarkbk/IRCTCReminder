@@ -279,9 +279,11 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
             query = """
                     SELECT j.user_id, j.google_calendar_event_id_release_date, 
                     j.google_calendar_event_id_day_before_release,
-                    cr.google_calendar_event_id_custom_date
+                    cr.google_calendar_event_id_custom_date,
+                    u.google_refresh_token
                     FROM journeys j
                     LEFT JOIN custom_reminders cr ON j.id = cr.journey_id
+                    JOIN users u ON j.user_id = u.id
                     WHERE j.id = $1
                     """
             
@@ -294,6 +296,7 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized")
             
             event_ids = set()
+            google_refresh_token = journeys[0]['google_refresh_token']
 
             for journey in journeys:
                 if journey['google_calendar_event_id_release_date']:
@@ -306,9 +309,8 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
             async with conn.transaction():
                 await conn.execute("DELETE FROM journeys WHERE id = $1 AND user_id = $2", journey_id, user_id)
 
-            user = await get_user_by_id(user_id, rds)
-            if event_ids:
-                tasks = [delete_calendar_event(user['google_refresh_token'], eventId) for eventId in event_ids]
+            if event_ids and google_refresh_token:
+                tasks = [delete_calendar_event(google_refresh_token, eventId) for eventId in event_ids]
                 await asyncio.gather(*tasks, return_exceptions=True)
 
             return "Journey deleted successfully"
