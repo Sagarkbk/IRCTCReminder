@@ -10,11 +10,7 @@ import asyncio
 
 async def generateLinkingToken(user_id, rds=None):
     try:
-        async with get_db_connection() as conn:
-            user = await get_user_by_id(user_id, rds)
-            if user is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-            
+        async with get_db_connection() as conn:            
             current_time = pendulum.now('UTC')
 
             existing_token_query = """
