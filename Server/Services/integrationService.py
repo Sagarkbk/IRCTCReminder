@@ -43,7 +43,7 @@ async def generateLinkingToken(user_id, rds=None):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
-async def linkTelegramAccount(body, user_id, token, rds=None):
+async def linkTelegramAccount(user_id, telegram_id, telegram_username, token, rds=None):
     try:
         print("Inside linkTelegramAccount")
         async with get_db_connection() as conn:
@@ -76,7 +76,7 @@ async def linkTelegramAccount(body, user_id, token, rds=None):
             current_time = pendulum.now('UTC')
             
             async with conn.transaction():
-                user = await conn.fetchrow(update_user_query, body.telegram_id, body.telegram_username, True, current_time, user_id)
+                user = await conn.fetchrow(update_user_query, telegram_id, telegram_username, True, current_time, user_id)
                 await conn.execute(update_token_query, True, user_id, token)
 
                 if rds and user:

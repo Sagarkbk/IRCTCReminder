@@ -4,9 +4,9 @@ import os
 from Services.userService import update_user_settings, get_user_by_telegram_id
 from Services.journeyService import get_existing_journeys
 from Models.userModel import UserPreferencesInput
-from fastapi import HTTPException, Depends
-import httpx
+from fastapi import HTTPException
 import pendulum
+from Services.integrationService import validateTokenAndGetUser, linkTelegramAccount
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -58,31 +58,29 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("Reached link")
         if not context.args:
             await update.message.reply_text("To link your account, please use the link provided on our website.")
+            return
         
         token = context.args[0]
-        print(f"token: {token}")
+        
+        telegram_id = update.message.from_user.id
+        telegram_username = update.message.from_user.username
 
         try:
-            telegram_id = update.message.from_user.id
-            telegram_username = update.message.from_user.username
-            API_URL = os.getenv("API_URL")
-            payload = {
-                "token": token,
-                "telegram_id": telegram_id,
-                "telegram_username": telegram_username
-            }
+            user = await validateTokenAndGetUser(token, rds=None)
 
-            async with httpx.AsyncClient() as client:
-                response = await client.put(
-                    f"{API_URL}/api/integration/telegram/linkAccount", 
-                    json=payload
-                    )
-                response.raise_for_status()
-                await update.message.reply_text("Success! Your telegram account is now linked.")
-        except httpx.HTTPStatusError as e:
-            await update.message.reply_text(e.response.json().get("detail"))
-        except httpx.RequestError:
-            await update.message.reply_text("An error occurred. Please try again later.")
+            if user.get('telegram_id') and user.get('telegram_enabled'):
+                await update.message.reply_text("Your Google and Telegram accounts are already linked.")
+                return
+
+            await linkTelegramAccount(user['id'], telegram_id, telegram_username, token, rds=None)
+            await update.message.reply_text("Success! Your telegram account is now linked.")
+        
+        except HTTPException as e:
+            await update.message.reply_text(f"{e.detail}")
+        
+        except Exception as e:
+            await update.message.reply_text("An error occurred during linking. Please try again later.")
+
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
