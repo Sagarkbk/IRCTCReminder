@@ -65,7 +65,5 @@ def createJwtToken(user):
                             algorithm="HS256"
                         )
         return jwt_token
-    except HTTPException:
-        raise
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
