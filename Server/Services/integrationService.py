@@ -79,15 +79,18 @@ async def linkTelegramAccount(user_id, telegram_id, telegram_username, token, rd
                 user = await conn.fetchrow(update_user_query, telegram_id, telegram_username, True, current_time, user_id)
                 await conn.execute(update_token_query, True, user_id, token)
 
-                if rds and user:
+            if rds and user:
                     try:
+                        await rds.delete(f"user:{user_id}")
+                        if existingUser['telegram_id']:
+                            await rds.delete(f"user_telegram:{existingUser['telegram_id']}")
                         await rds.setex(f"user:{user_id}", 900, json.dumps(dict(user), default=str))
                         if user['telegram_id']:
                             await rds.setex(f"user_telegram:{user['telegram_id']}", 900, json.dumps(dict(user), default=str))
                     except Exception as e:
                         print(f"Failed to cache user:{user_id}: {e}")
                         
-                return dict(user)
+            return dict(user)
     except HTTPException:
         raise
     except Exception:

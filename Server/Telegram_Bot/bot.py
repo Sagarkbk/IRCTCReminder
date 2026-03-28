@@ -65,14 +65,16 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         telegram_id = update.message.from_user.id
         telegram_username = update.message.from_user.username
 
+        rds = context.bot_data.get('rds')
+
         try:
-            user = await validateTokenAndGetUser(token, rds=None)
+            user = await validateTokenAndGetUser(token, rds=rds)
 
             if user.get('telegram_id') and user.get('telegram_enabled'):
                 await update.message.reply_text("Your Google and Telegram accounts are already linked.")
                 return
 
-            await linkTelegramAccount(user['id'], telegram_id, telegram_username, token, rds=None)
+            await linkTelegramAccount(user['id'], telegram_id, telegram_username, token, rds=rds)
             await update.message.reply_text("Success! Your telegram account is now linked.")
         
         except HTTPException as e:

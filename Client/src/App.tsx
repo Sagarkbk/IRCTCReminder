@@ -6,8 +6,11 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Profile } from "./pages/Profile";
 import { useAppSelector } from "./store/hooks";
 import { useEffect } from "react";
+import { useUserProfile } from "./hooks/profile/useUserProfile";
 
 const AppRoutes = () => {
+  useUserProfile();
+
   const { isAuthenticated, isLoading, error } = useAppSelector(
     (state) => state.auth,
   );

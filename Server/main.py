@@ -30,6 +30,8 @@ async def lifespan(app: FastAPI):
     ptb_app = bot_initialization()
     await ptb_app.initialize()
 
+    ptb_app.bot_data['rds'] = redis_connection
+
     WEBHOOK_URL = os.getenv("WEBHOOK_URL")
     if WEBHOOK_URL:
         full_webhook_url = f"{WEBHOOK_URL}/api/telegram/webhook"
