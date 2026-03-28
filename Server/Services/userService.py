@@ -137,12 +137,7 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
     
 async def update_user_settings(user_id, body, rds = None):
     try:
-        async with get_db_connection() as conn:
-            user = await get_user_by_id(user_id, rds)
-            if user is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-            
-            if rds:
+        if rds:
                 try:
                     cached_user = await rds.get(f"user:{user_id}")
                     if cached_user:
@@ -155,6 +150,11 @@ async def update_user_settings(user_id, body, rds = None):
                         print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
                     print(f"Failed to delete cache user:{user_id}: {e}")
+        
+        async with get_db_connection() as conn:
+            user = await get_user_by_id(user_id, rds)
+            if user is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
             calendar_enabled = user['calendar_enabled']
             telegram_enabled = user['telegram_enabled']
@@ -171,19 +171,22 @@ async def update_user_settings(user_id, body, rds = None):
             updated_user = await conn.fetchrow(query, calendar_enabled, telegram_enabled,
                                             pendulum.now('UTC'), user_id)
             
-            if user['calendar_enabled'] and not updated_user['calendar_enabled']:
-                from Services.integrationService import revoke_all_calendar_events
-                await revoke_all_calendar_events(user_id, rds)
+        if user['calendar_enabled'] and not updated_user['calendar_enabled']:
+            from Services.integrationService import revoke_all_calendar_events
+            await revoke_all_calendar_events(user_id, rds)
             
-            if rds and updated_user:
+        if rds and updated_user:
                 try:
+                    await rds.delete(f"user:{user_id}")
+                    if updated_user['telegram_id']:
+                        await rds.delete(f"user_telegram:{updated_user['telegram_id']}")
                     await rds.setex(f"user:{user_id}", 900, json.dumps(dict(updated_user), default=str))
                     if updated_user['telegram_id']:
                         await rds.setex(f"user_telegram:{updated_user['telegram_id']}", 900, json.dumps(dict(updated_user), default=str))
                 except Exception as e:
                     print(f"Failed to cache user:{user_id}: {e}")
 
-            return dict(updated_user)
+        return dict(updated_user)
     except HTTPException:
         raise
     except Exception:

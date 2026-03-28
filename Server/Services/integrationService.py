@@ -139,7 +139,7 @@ async def revoke_all_calendar_events(user_id, rds = None):
                     FROM users u
                     LEFT JOIN journeys j ON u.id = j.user_id
                     LEFT OUTER JOIN custom_reminders cr ON j.id = cr.journey_id
-                    WHERE j.user_id = $1
+                    WHERE u.id = $1
                     """
             journeys = await conn.fetch(query, user_id)
 
@@ -158,19 +158,15 @@ async def revoke_all_calendar_events(user_id, rds = None):
                 if journey['google_calendar_event_id_custom_date']:
                     event_ids.add(journey['google_calendar_event_id_custom_date'])
             
-            
-
-            tasks = [delete_calendar_event(refresh_token, event_id) for event_id in event_ids]
-            await asyncio.gather(*tasks, return_exceptions=True)
-
             async with conn.transaction():
                 await conn.execute("UPDATE journeys SET google_calendar_event_id_release_date = NULL, google_calendar_event_id_day_before_release = NULL WHERE user_id = $1", user_id)
                 await conn.execute("UPDATE custom_reminders SET google_calendar_event_id_custom_date = NULL WHERE journey_id IN (SELECT id FROM journeys WHERE user_id = $1)", user_id)
 
+            if event_ids and refresh_token:
+                tasks = [delete_calendar_event(refresh_token, event_id) for event_id in event_ids]
+                await asyncio.gather(*tasks, return_exceptions=True)
 
     except HTTPException:
-        print(Exception)
         raise
     except Exception:
-        print(Exception)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
