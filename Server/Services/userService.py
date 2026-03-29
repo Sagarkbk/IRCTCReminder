@@ -164,7 +164,11 @@ async def update_user_settings(user_id, body, rds = None):
                 telegram_enabled = body.telegram_enabled
             query = """
                     UPDATE users
-                    SET calendar_enabled = $1, telegram_enabled = $2, last_updated_at = $3
+                    SET calendar_enabled = $1, telegram_enabled = $2, 
+                    telegram_id = CASE WHEN $2 = FALSE THEN NULL ELSE telegram_id END,
+                    telegram_username = CASE WHEN $2 = FALSE THEN NULL ELSE telegram_username END,
+                    telegram_linked_at = CASE WHEN $2 = FALSE THEN NULL ELSE telegram_linked_at END,
+                    last_updated_at = $3
                     WHERE id = $4
                     RETURNING id, email, username, google_refresh_token, calendar_enabled, telegram_enabled, telegram_id
                     """
@@ -178,6 +182,8 @@ async def update_user_settings(user_id, body, rds = None):
         if rds and updated_user:
                 try:
                     await rds.delete(f"user:{user_id}")
+                    if user.get('telegram_id'):
+                        await rds.delete(f"user_telegram:{user['telegram_id']}")
                     if updated_user['telegram_id']:
                         await rds.delete(f"user_telegram:{updated_user['telegram_id']}")
                     await rds.setex(f"user:{user_id}", 900, json.dumps(dict(updated_user), default=str))
