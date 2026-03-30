@@ -86,10 +86,11 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
-async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE, rds = None):
+async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         print("Reached journeys")
         telegram_id = update.message.from_user.id
+        rds = context.bot_data.get('rds')
         user = await get_user_by_telegram_id(telegram_id, rds)
         journeys = await get_existing_journeys(user['id'], rds)
         if len(journeys) == 0:
@@ -118,7 +119,7 @@ async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE, rds = Non
 
         await update.message.reply_text(message, parse_mode='Markdown')
     except Exception as e:
-        await update.callback_query.edit_message_text("An unexpected error occurred. Please try again later.")
+        await update.message.reply_text("An unexpected error occurred. Please try again later.")
 
 async def send_message(bot_app: Application, telegram_id: int, message: str):
     try:
@@ -127,13 +128,14 @@ async def send_message(bot_app: Application, telegram_id: int, message: str):
     except Exception as e:
         return False
 
-async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE, rds = None):
+async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         query = update.callback_query
+        rds = context.bot_data.get('rds')
         if query:
             await query.answer()
             telegram_id = update.callback_query.from_user.id
-            user = await get_user_by_telegram_id(telegram_id)
+            user = await get_user_by_telegram_id(telegram_id, rds)
             if query.data in ("enable", "do_not_enable"):
                 if query.data == "enable":
                     user_prefs = UserPreferencesInput(telegram_enabled=True)
