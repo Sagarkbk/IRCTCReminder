@@ -41,12 +41,8 @@ export function useTelegramConnect() {
       setToken(null);
       const response = await apiClient.post(
         `${import.meta.env.VITE_API_URL}/integration/telegram/generateToken`,
-        {
-          telegram_enabled: true,
-        },
       );
       setToken(response.data.data);
-      // login(response.data.data);
     } catch (err) {
       if (isAxiosError(err)) {
         setError(
