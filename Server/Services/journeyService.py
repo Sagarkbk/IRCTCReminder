@@ -137,12 +137,12 @@ async def update_journey(body, user_id, journey_id, rds=None):
             if not records:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journey not found")
             if records[0]['user_id'] != user_id:
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this journey")
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to update this journey")
             
             journey_name = records[0]['journey_name']
 
             name_changed = False
-   
+
             if body.journey_name is not None and body.journey_name != records[0]['journey_name']:
                 journey_name = body.journey_name
                 name_changed = True                

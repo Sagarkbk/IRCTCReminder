@@ -25,7 +25,8 @@ export function useJourneyStats() {
         if (isAxiosError(err)) {
           dispatch(
             setError(
-              err.response?.data?.detail || "Failed to fetch user profile.",
+              err.response?.data?.detail ||
+                "Failed to fetch user journey statistics.",
             ),
           );
         } else {
