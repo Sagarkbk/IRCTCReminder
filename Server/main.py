@@ -33,11 +33,17 @@ async def lifespan(app: FastAPI):
     ptb_app.bot_data['rds'] = redis_connection
 
     WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+    TELEGRAM_SECRET_TOKEN = os.getenv("TELEGRAM_SECRET_TOKEN")
+
+    if not TELEGRAM_SECRET_TOKEN:
+        raise ValueError("TELEGRAM_SECRET_TOKEN is missing! Bot cannot start securely.")
+
     if WEBHOOK_URL:
         full_webhook_url = f"{WEBHOOK_URL}/api/telegram/webhook"
         await ptb_app.bot.set_webhook(
             url=full_webhook_url,
-            allowed_updates=Update.ALL_TYPES
+            allowed_updates=Update.ALL_TYPES,
+            secret_token=TELEGRAM_SECRET_TOKEN
         )
         print(f"Telegram webhook set to: {full_webhook_url}")
     else:
