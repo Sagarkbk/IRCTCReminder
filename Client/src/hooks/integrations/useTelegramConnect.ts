@@ -13,9 +13,7 @@ export function useTelegramConnect() {
 
   const reFetchUser = useCallback(async () => {
     try {
-      const response = await apiClient.get(
-        `${import.meta.env.VITE_API_URL}/user/profile`,
-      );
+      const response = await apiClient.get("/user/profile");
       dispatch(login(response.data.data));
     } catch (err) {
       console.error("Failed to refresh user profile:", err);
@@ -40,7 +38,7 @@ export function useTelegramConnect() {
       setError(null);
       setToken(null);
       const response = await apiClient.post(
-        `${import.meta.env.VITE_API_URL}/integration/telegram/generateToken`,
+        "/integration/telegram/generateToken",
       );
       setToken(response.data.data);
     } catch (err) {

@@ -17,9 +17,7 @@ export function useJourneyStats() {
     const fetchJourneyStats = async () => {
       try {
         dispatch(setLoading(true));
-        const response = await apiClient.get(
-          `${import.meta.env.VITE_API_URL}/journey/journeyStats`,
-        );
+        const response = await apiClient.get("/journey/journeyStats");
         dispatch(setStats(response.data.data));
       } catch (err) {
         if (isAxiosError(err)) {

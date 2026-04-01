@@ -1,7 +1,7 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 import { useAppDispatch } from "../../store/hooks";
 import { login, setLoading, setError } from "../../store/slices/authSlice";
+import apiClient from "../../api/apiClient";
 
 export function useGoogleAuth() {
   const dispatch = useAppDispatch();
@@ -12,13 +12,10 @@ export function useGoogleAuth() {
         dispatch(setLoading(true));
         dispatch(setError(null));
         const { code } = codeResponse;
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/google`,
-          {
-            authCode: code,
-            clientId: import.meta.env.VITE_WEB_CLIENT_ID,
-          },
-        );
+        const response = await apiClient.post("/auth/google", {
+          authCode: code,
+          clientId: import.meta.env.VITE_WEB_CLIENT_ID,
+        });
         const data = response.data.data;
         const user = data.user;
         console.log(data);

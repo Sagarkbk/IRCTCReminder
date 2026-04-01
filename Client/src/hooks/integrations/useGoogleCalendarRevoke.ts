@@ -13,12 +13,9 @@ export function useGoogleCalendarRevoke() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiClient.put(
-        `${import.meta.env.VITE_API_URL}/user/preferences`,
-        {
-          calendar_enabled: false,
-        },
-      );
+      const response = await apiClient.put("/user/preferences", {
+        calendar_enabled: false,
+      });
       dispatch(login(response.data.data));
     } catch (err) {
       if (isAxiosError(err)) {

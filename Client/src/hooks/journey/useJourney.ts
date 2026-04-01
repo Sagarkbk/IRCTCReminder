@@ -27,9 +27,7 @@ export function useJourney() {
   const fetchJourneys = async () => {
     try {
       dispatch(setLoading(true));
-      const response = await apiClient.get(
-        `${import.meta.env.VITE_API_URL}/journey/existing`,
-      );
+      const response = await apiClient.get("/journey/existing");
       dispatch(setJourneys(response.data.data));
     } catch (err) {
       if (isAxiosError(err)) {
@@ -49,10 +47,7 @@ export function useJourney() {
   const addNewJourney = async (body: Body) => {
     try {
       dispatch(setLoading(true));
-      const response = await apiClient.post(
-        `${import.meta.env.VITE_API_URL}/journey/add`,
-        body,
-      );
+      const response = await apiClient.post("/journey/add", body);
       dispatch(addJourney(response.data.data));
     } catch (err) {
       if (isAxiosError(err)) {
@@ -70,9 +65,7 @@ export function useJourney() {
   const removeExistingJourney = async (id: number) => {
     try {
       dispatch(setLoading(true));
-      await apiClient.delete(
-        `${import.meta.env.VITE_API_URL}/journey/delete?journey_id=${id}`,
-      );
+      await apiClient.delete(`/journey/delete?journey_id=${id}`);
       dispatch(deleteJourney(id));
     } catch (err) {
       if (isAxiosError(err)) {
@@ -91,7 +84,7 @@ export function useJourney() {
     try {
       dispatch(setLoading(true));
       const response = await apiClient.put(
-        `${import.meta.env.VITE_API_URL}/journey/update?journey_id=${id}`,
+        `/journey/update?journey_id=${id}`,
         body,
       );
       dispatch(updateJourney(response.data.data));
