@@ -154,16 +154,18 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await query.edit_message_text("✅ Reminders are now Enabled! Use /stop to disable reminders")
                 elif query.data == "do_not_enable":
                     await query.edit_message_text("No changes made.")
-            if query.data in ("disable", "do_not_disable"):
+            elif query.data in ("disable", "do_not_disable"):
                 if query.data == "disable":
                     user_prefs = UserPreferencesInput(telegram_enabled=False)
                     await update_user_settings(user['id'], user_prefs, rds)
                     await query.edit_message_text("❌ Reminders are disabled and your account has been unlinked. Visit the website to reconnect!")
                 elif query.data == "do_not_disable":
                     await query.edit_message_text("No changes made. Your reminders are still active! ✅")
+            else:
+                await query.edit_message_text("❌ Not a valid button.")
     except HTTPException as e:
         if e.status_code == 404:
-            await update.callback_query.edit_message_text("Your telegram account is not associated with any of our website account. Please create an account on our website and try again")
+            await update.callback_query.edit_message_text("❌ Account not found. It may have been unlinked. Please reconnect from our website!")
         else:
             await update.callback_query.edit_message_text(f"An unexpected error occurred: {e.detail}. Please try again later.")
     except Exception as e:
