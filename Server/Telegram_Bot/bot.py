@@ -108,20 +108,20 @@ async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = "Here are your upcoming journeys:\n\n"
         
         for journey in journeys:
-            journey_date = pendulum.parse(journey['journey_date'])
-            message += f"*{journey['journey_name']}* (Journey on {journey_date})"
+            j_date = pendulum.parse(str(journey['journey_date'])).format('DD MMM YYYY')
+            message += f"*{journey['journey_name']}* ({j_date})\n"
             reminders = []
             if journey['reminder_on_release_day']:
-                reminders.append(pendulum.parse(journey['release_day_date']))
+                reminders.append(pendulum.parse(str(journey['release_day_date'])))
             if journey['reminder_on_day_before']:
-                reminders.append(pendulum.parse(journey['day_before_release_date']))
+                reminders.append(pendulum.parse(str(journey['day_before_release_date'])))
             if journey['custom_reminders']:
                 for reminder in journey['custom_reminders']:
-                    reminders.append(pendulum.parse(reminder['reminder_date']))
+                    reminders.append(pendulum.parse(str(reminder['reminder_date'])))
             if reminders:
                 unique_reminders = sorted(list(set(reminders)))
-                reminders_str = ", ".join(map(str, unique_reminders))
-                message += f"Reminders on: {reminders_str}\n\n"
+                rem_dates = [r.format('DD MMM YYYY') for r in unique_reminders]
+                message += f"Reminders: {', '.join(rem_dates)}\n\n"
             else:
                 message += "No reminders set for this journey\n\n"
 
