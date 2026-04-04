@@ -146,18 +146,21 @@ async def commandHandler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user = await get_user_by_telegram_id(telegram_id, rds)
             if query.data in ("enable", "do_not_enable"):
                 if query.data == "enable":
-                    user_prefs = UserPreferencesInput(telegram_enabled=True)
-                    await update_user_settings(user['id'], user_prefs, rds)
-                    await query.edit_message_text("✅ Reminders are Enabled! Use /stop to disable reminders")
+                    if user.get('telegram_enabled'):
+                        await query.edit_message_text("✅ Reminders are already enabled!")
+                    else:
+                        user_prefs = UserPreferencesInput(telegram_enabled=True)
+                        await update_user_settings(user['id'], user_prefs, rds)
+                        await query.edit_message_text("✅ Reminders are now Enabled! Use /stop to disable reminders")
                 elif query.data == "do_not_enable":
-                    await query.edit_message_text("❌ Reminders are not Enabled! Use /start to enable reminders")
+                    await query.edit_message_text("No changes made.")
             if query.data in ("disable", "do_not_disable"):
                 if query.data == "disable":
                     user_prefs = UserPreferencesInput(telegram_enabled=False)
                     await update_user_settings(user['id'], user_prefs, rds)
-                    await query.edit_message_text("✅ Reminders are Disabled! Use /start to enable reminders")
+                    await query.edit_message_text("❌ Reminders are disabled and your account has been unlinked. Visit the website to reconnect!")
                 elif query.data == "do_not_disable":
-                    await query.edit_message_text("❌ Reminders are not Disabled! Use /stop to disable reminders")
+                    await query.edit_message_text("No changes made. Your reminders are still active! ✅")
     except HTTPException as e:
         if e.status_code == 404:
             await update.callback_query.edit_message_text("Your telegram account is not associated with any of our website account. Please create an account on our website and try again")
