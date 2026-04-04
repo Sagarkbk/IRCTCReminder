@@ -11,17 +11,16 @@ from Services.integrationService import validateTokenAndGetUser, linkTelegramAcc
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         print("Reached help")
-        message = """
-                Welcome! Here are the available commands:
-                
-                /start       - Enable reminders.
-                /stop        - Disable reminders.
-                /journeys    - Lists all of your journeys.
-                /help        - Shows this help message.
+        message = """*Welcome! Here are the available commands:*
 
-                To link your account, please click the "Link Telegram" button on our website. This will bring you here and automatically link your account.
-                """
-        await update.message.reply_text(message)
+`/start   ` - Enable reminders.
+`/stop    ` - Disable reminders.
+`/journeys` - Lists all of your journeys.
+`/help    ` - Shows this help message.
+
+To link your account, please click the "Link Telegram" button on our website. This will bring you here and automatically link your account."""
+
+        await update.message.reply_text(message, parse_mode='Markdown')
     except Exception as e:
         await update.message.reply_text("An error occurred. Please try again later.")
 
@@ -76,6 +75,15 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await linkTelegramAccount(user['id'], telegram_id, telegram_username, token, rds=rds)
             await update.message.reply_text("Success! Your telegram account is now linked.")
+
+            welcome_message = """*Welcome! Here are the available commands:*
+
+`/start   ` - Enable reminders.
+`/stop    ` - Disable reminders.
+`/journeys` - Lists all of your journeys.
+`/help    ` - Shows this help message."""
+
+            await update.message.reply_text(welcome_message, parse_mode='Markdown')
         
         except HTTPException as e:
             await update.message.reply_text(f"{e.detail}")
