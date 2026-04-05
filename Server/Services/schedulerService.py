@@ -134,6 +134,7 @@ async def send_telegram_reminders(ptb_app):
         async with get_db_connection() as conn:
 
             today = pendulum.now('Asia/Kolkata').date()
+            current_time = pendulum.now('UTC')
 
             get_all_standard_reminders = """
                                         SELECT u.id as uid, u.telegram_id, u.calendar_enabled, u.telegram_enabled, j.* 
@@ -146,26 +147,28 @@ async def send_telegram_reminders(ptb_app):
 
             for reminder in standard_reminders:
                 try:
-                    if reminder['release_day_date'] == today and not reminder['sent_telegram_reminder_release_day']:
+                    if reminder['release_day_date'] == today and reminder['sent_telegram_reminder_release_day'] is None:
                         await send_message(
                                         ptb_app,
                                         reminder['telegram_id'], 
                                         f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released today at 8AM IST"
                                     )
                         await conn.execute(
-                                        "UPDATE journeys SET sent_telegram_reminder_release_day = TRUE WHERE user_id=$1 AND id=$2", 
+                                        "UPDATE journeys SET sent_telegram_reminder_release_day = $1 WHERE user_id=$2 AND id=$3", 
+                                        current_time, 
                                         reminder['uid'], 
                                         reminder['id']
                                     )
                         
-                    if reminder['day_before_release_date'] == today and not reminder['sent_telegram_reminder_day_before']:
+                    if reminder['day_before_release_date'] == today and reminder['sent_telegram_reminder_day_before'] is None:
                         await send_message(
                                         ptb_app,
                                         reminder['telegram_id'], 
                                         f"Hii! This is your reminder that tickets for your {reminder['journey_name']} on {reminder['journey_date']} will be released tomorrow at 8AM IST"
                                     )
                         await conn.execute(
-                                        "UPDATE journeys SET sent_telegram_reminder_day_before = TRUE WHERE user_id=$1 AND id=$2", 
+                                        "UPDATE journeys SET sent_telegram_reminder_day_before = $1 WHERE user_id=$2 AND id=$3", 
+                                        current_time, 
                                         reminder['uid'], 
                                         reminder['id']
                                     )
@@ -179,7 +182,7 @@ async def send_telegram_reminders(ptb_app):
                                         JOIN journeys j ON u.id = j.user_id 
                                         JOIN custom_reminders cr ON j.id = cr.journey_id 
                                         WHERE u.telegram_enabled = TRUE AND u.telegram_id IS NOT NULL
-                                        AND cr.telegram_reminder_is_sent = FALSE
+                                        AND cr.sent_telegram_reminder_custom_day IS NULL
                                         AND cr.reminder_date = $1
                                         """
             
@@ -193,7 +196,8 @@ async def send_telegram_reminders(ptb_app):
                                         f"Hii! This is your custom reminder for booking train tickets for your {reminder['journey_name']} on {reminder['journey_date']}."
                                     )
                     await conn.execute(
-                                    "UPDATE custom_reminders SET telegram_reminder_is_sent = TRUE WHERE id=$1", 
+                                    "UPDATE custom_reminders SET sent_telegram_reminder_custom_day = $1 WHERE id=$2", 
+                                    current_time, 
                                     reminder['id']
                                 )
                 except Exception as e:
