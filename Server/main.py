@@ -20,7 +20,9 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis_pool = redis.ConnectionPool.from_url("redis://localhost:6379", max_connections=20, encoding="utf8", decode_responses=True)
+
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+    redis_pool = redis.ConnectionPool.from_url(REDIS_URL, max_connections=20, encoding="utf8", decode_responses=True)
     redis_connection = redis.Redis(connection_pool=redis_pool)
 
     await FastAPILimiter.init(redis_connection)
@@ -75,10 +77,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+frontend_urls_str = os.getenv("FRONTEND_URLS", "")
+origins = [url.strip() for url in frontend_urls_str.split(",") if url.strip()]
 
 app.add_middleware(
     CORSMiddleware,
