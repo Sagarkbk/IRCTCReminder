@@ -14,14 +14,18 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from Services.schedulerService import create_google_calendar_event, send_telegram_reminders
 from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
+from telegram.error import RetryAfter
 import os
+import asyncio
 
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+    REDIS_URL = os.getenv("REDIS_URL")
+    if not REDIS_URL:
+        REDIS_URL = "redis://localhost:6379"
     redis_pool = redis.ConnectionPool.from_url(REDIS_URL, max_connections=20, encoding="utf8", decode_responses=True)
     redis_connection = redis.Redis(connection_pool=redis_pool)
 
@@ -42,29 +46,45 @@ async def lifespan(app: FastAPI):
 
     if WEBHOOK_URL:
         full_webhook_url = f"{WEBHOOK_URL}/api/telegram/webhook"
-        await ptb_app.bot.set_webhook(
+        try:
+            await ptb_app.bot.set_webhook(
             url=full_webhook_url,
             allowed_updates=Update.ALL_TYPES,
             secret_token=TELEGRAM_SECRET_TOKEN
-        )
-        print(f"Telegram webhook set to: {full_webhook_url}")
+            )
+            print(f"Telegram webhook set to: {full_webhook_url}")
+        except RetryAfter as e:
+            print(f"Flood control: Webhook setup already handled by another worker. Sleeping {e.retry_after}s...")
+            await asyncio.sleep(e.retry_after)
+        except Exception as e:
+            print(f"Unexpected error setting webhook: {e}")
     else:
         print("WARNING: WEBHOOK_URL environment variable not set. Bot will not receive updates.")
 
     app.state.ptb_app = ptb_app
     print("Bot has been initialized")
 
-    scheduler = AsyncIOScheduler(timezone='Asia/Kolkata')
-    scheduler.add_job(send_telegram_reminders, 'cron', hour='6,7,8', minute='0', args=[ptb_app])
-    scheduler.add_job(create_google_calendar_event, 'cron', hour='*', minute='0')
+    is_master = await redis_connection.set("irctc:scheduler_lock", "active", nx=True, ex=600)
 
-    scheduler.start()
-    print("Scheduler has started")
+    if is_master:
+        scheduler = AsyncIOScheduler(timezone='Asia/Kolkata')
+        scheduler.add_job(send_telegram_reminders, 'cron', hour='6,7,8', minute='0', args=[ptb_app])
+        scheduler.add_job(create_google_calendar_event, 'cron', hour='*', minute='0')
+        scheduler.start()
+        app.state.scheduler = scheduler
+        print(f"PRIMARY WORKER: Scheduler started on worker {os.getpid()}")
+    else:
+        app.state.scheduler = None
+        print("Scheduler already started by another worker. Skipping...")
 
     yield
 
-    scheduler.shutdown()
-    print("Scheduler has shutdown")
+    if app.state.scheduler:
+        app.state.scheduler.shutdown()
+        await redis_connection.delete("irctc:scheduler_lock")
+        print("Scheduler has shutdown and lock cleared")
+    else:
+        print("Worker shutdown complete")
 
     await FastAPILimiter.close()
     print("FastAPILimiter has been closed")
