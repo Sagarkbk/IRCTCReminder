@@ -4,7 +4,8 @@ from pathlib import Path
 
 class Migrations:
     def __init__(self):
-        self.migrations_dir = Path("Database/Migrations")
+        current_file_path = Path(__file__).resolve()
+        self.migrations_dir = current_file_path.parent / "Migrations"
     
     async def create_migrations_tracking_table(self):
         try:
@@ -27,41 +28,39 @@ class Migrations:
         try:
             await self.create_migrations_tracking_table()
 
-            applied_migrations_query = "SELECT file_name from migrations_tracking"
-
             async with get_db_connection() as conn:
-                applied_rows = await conn.fetch(applied_migrations_query)
+                applied_rows = await conn.fetch("SELECT file_name from migrations_tracking")
                 applied_migrations = [row['file_name'] for row in applied_rows]
 
-            migrations_files = sorted(self.migrations_dir.glob("*.sql"))
+                migrations_files = sorted(self.migrations_dir.glob("*.sql"))
 
-            pending_migrations = [f for f in migrations_files if f.name not in applied_migrations]
+                pending_migrations = [f for f in migrations_files if f.name not in applied_migrations]
 
-            if not pending_migrations:
-                print("No pending migrations")
-                return
-            
-            print(f"There are {len(pending_migrations)} pending migrations")
+                if not pending_migrations:
+                    print("No pending migrations")
+                    return
+                
+                print(f"There are {len(pending_migrations)} pending migrations")
 
-            for file_name in pending_migrations:
-                await self.run_migration(file_name)
+                for file_name in pending_migrations:
+                    await self.run_migration(conn, file_name)
         
         except Exception as e:
             print(f"Exception in run_pending_migrations: {e}")
             raise
     
-    async def run_migration(self, file_name):
+    async def run_migration(self, conn, file_name):
         try:
             with open(file_name, 'r') as file:
                 sql_content = file.read()
-            async with get_db_connection() as conn:
-                async with conn.transaction():
-                    await conn.execute(sql_content)
-                    await conn.execute(
-                        "INSERT INTO migrations_tracking (file_name) VALUES ($1)",
-                        file_name.name
-                    )
-            print(f"Applied migration {file_name.name}")
+
+            async with conn.transaction():
+                await conn.execute(sql_content)
+                await conn.execute(
+                    "INSERT INTO migrations_tracking (file_name) VALUES ($1)",
+                    file_name.name
+                )
+                print(f"Applied migration {file_name.name}")
         
         except Exception as e:
             print(f"Exception applying migration {file_name.name}: {e}")
@@ -74,8 +73,8 @@ async def main():
         await migration_runner.run_pending_migrations()
         print("Migration Runner Completed")
     except Exception as e:
-            print(f"Migration Runner Failed: {e}")
-            raise
+        print(f"Migration Runner Failed: {e}")
+        raise
     finally:
         await close_pool()
 

@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
 from telegram.error import RetryAfter
 from Database.connection import init_pool, close_pool
+from Database.migrations_runner import Migrations
 import os
 import asyncio
 
@@ -69,6 +70,10 @@ async def lifespan(app: FastAPI):
     is_master = await redis_connection.set("irctc:scheduler_lock", "active", nx=True, ex=600)
 
     if is_master:
+        migration_runner = Migrations()
+        await migration_runner.run_pending_migrations()
+        print(f"PRIMARY WORKER: Database migrations checked/applied by worker {os.getpid()}")
+
         scheduler = AsyncIOScheduler(timezone='Asia/Kolkata')
         scheduler.add_job(send_telegram_reminders, 'cron', hour='6,7,8', minute='0', args=[ptb_app])
         scheduler.add_job(create_google_calendar_event, 'cron', hour='*', minute='0')
