@@ -15,6 +15,7 @@ from Services.schedulerService import create_google_calendar_event, send_telegra
 from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
 from telegram.error import RetryAfter
+from Database.connection import init_pool, close_pool
 import os
 import asyncio
 
@@ -22,6 +23,7 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_pool()
 
     REDIS_URL = os.getenv("REDIS_URL")
     if not REDIS_URL:
@@ -78,6 +80,8 @@ async def lifespan(app: FastAPI):
         print("Scheduler already started by another worker. Skipping...")
 
     yield
+
+    await close_pool()
 
     if app.state.scheduler:
         app.state.scheduler.shutdown()
