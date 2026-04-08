@@ -17,11 +17,11 @@ async def telegram_webhook(request: Request):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized request")
 
     try:
-        print("Reached /webhook")
         ptb_app = request.app.state.ptb_app
         data = await request.json()
         update = Update.de_json(data=data, bot=ptb_app.bot)
         await ptb_app.process_update(update)
         return
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+        print(f"Error in telegram_webhook: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

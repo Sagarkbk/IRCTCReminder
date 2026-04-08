@@ -10,12 +10,12 @@ integrationRouter = APIRouter(prefix="/integration")
 @integrationRouter.post("/telegram/generateToken", status_code = status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def generateToken(user_id: int = Depends(authMiddleware), rds: Redis = Depends(get_redis)):
     try:
-        print("Reached /telegram/generateToken")
         token = await generateLinkingToken(user_id, rds)
         return {"data": token}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in generateToken: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 # @integrationRouter.put("/telegram/linkAccount", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=20, seconds=60))])

@@ -5,7 +5,6 @@ import pendulum
 from Models.googleCalendarModel import CalendarEvent
 
 async def create_google_calendar_event():
-    print(">>> create_google_calendar_event job started")
     try:
         async with get_db_connection() as conn:
             
@@ -17,12 +16,10 @@ async def create_google_calendar_event():
                                         """
             
             standard_reminders = await conn.fetch(get_all_standard_reminders)
-            print(f">>> Found {len(standard_reminders)} standard reminders")
             
             for reminder in standard_reminders:
                 try:
                     if reminder['reminder_on_release_day'] and not reminder['google_calendar_event_id_release_date']:
-                        print(f">>> Processing journey: {reminder['journey_name']}, release_day: {reminder['release_day_date']}")
                         date = reminder['release_day_date']
                         event_day_ist = pendulum.datetime(date.year, date.month, date.day, tz='Asia/Kolkata')
                         event_start_time = event_day_ist.add(hours=8)
@@ -48,10 +45,8 @@ async def create_google_calendar_event():
                                         reminder['uid'], 
                                         reminder['id'] 
                                     )
-                        print(f">>> Completed journey: {reminder['journey_name']}, release_day: {reminder['release_day_date']}")
                     
                     if reminder['reminder_on_day_before'] and not reminder['google_calendar_event_id_day_before_release']:
-                        print(f">>> Processing journey: {reminder['journey_name']}, day_before_release: {reminder['reminder_on_day_before']}")
                         date = reminder['day_before_release_date']
                         event_day_ist = pendulum.datetime(date.year, date.month, date.day, tz='Asia/Kolkata')
                         event_start_time = event_day_ist.add(hours=8)
@@ -77,10 +72,8 @@ async def create_google_calendar_event():
                                         reminder['uid'], 
                                         reminder['id'] 
                                     )
-                        print(f">>> Completed journey: {reminder['journey_name']}, day_before_release: {reminder['release_day_date']}")
         
                 except Exception as e:
-                    print(f"Failed while creating calendar event for user {reminder['uid']} for journey {reminder['journey_name']}. Error: {e}")
                     continue
             
             get_all_custom_reminders = """
@@ -121,13 +114,10 @@ async def create_google_calendar_event():
                                     reminder['id'] 
                                 )
                 except Exception as e:
-                    print(f"Failed while creating calendar event for user {reminder['id']} for journey {reminder['journey_name']}. Error: {e}")
                     continue
                 
     except Exception as e:
         print(f"Error in create_google_calendar_event: {e}")
-    
-    print(">>> create_google_calendar_event job completed")
     
 async def send_telegram_reminders(ptb_app):
     try:

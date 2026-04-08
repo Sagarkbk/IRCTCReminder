@@ -17,7 +17,6 @@ async def get_existing_journeys(user_id, rds=None):
                     cache_key = f"journeys:user:{user_id}"
                     cached_journeys = await rds.get(cache_key)
                     if cached_journeys:
-                        print(f"journeys:user:{user_id} cache exists")
                         return json.loads(cached_journeys)
                 except Exception as e:
                     print(f"Redis error: {e}")
@@ -55,14 +54,14 @@ async def get_existing_journeys(user_id, rds=None):
                 try:
                     await rds.delete(f"journeys:user:{user_id}")
                     await rds.setex(f"journeys:user:{user_id}", 900, json.dumps(journeys, default=str))
-                    print(f"Cached journeys:user:{user_id}")
                 except Exception as e:
                     print(f"Failed to cache journeys:user:{user_id}: {e}")
 
             return journeys
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_existing_journeys: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def add_journey(body, user_id, rds=None):
@@ -72,9 +71,6 @@ async def add_journey(body, user_id, rds=None):
                 cached_journeys = await rds.get(f"journeys:user:{user_id}")
                 if cached_journeys:
                     await rds.delete(f"journeys:user:{user_id}")
-                    print(f"Cache journeys:user:{user_id} is deleted")
-                else:
-                    print(f"There is no cache journeys:user:{user_id} to be deleted")
             except Exception as e:
                 print(f"Failed to delete cache journeys:user:{user_id}: {e}")
 
@@ -93,7 +89,6 @@ async def add_journey(body, user_id, rds=None):
                 current_time = pendulum.now('UTC')
                 release_day_date = pendulum.parse(str(body.journey_date)).subtract(days=60)
                 day_before_release_date = release_day_date.subtract(days=1)
-                print(body)
 
                 new_journey = await conn.fetchrow(journey_query, user_id, body.journey_name, body.journey_date, release_day_date, day_before_release_date, body.reminder_on_release_day, body.reminder_on_day_before, current_time)
 
@@ -107,7 +102,8 @@ async def add_journey(body, user_id, rds=None):
         return journey
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in add_journey: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def update_journey(body, user_id, journey_id, rds=None):
@@ -118,9 +114,6 @@ async def update_journey(body, user_id, journey_id, rds=None):
                     cached_journeys = await rds.get(f"journeys:user:{user_id}")
                     if cached_journeys:
                         await rds.delete(f"journeys:user:{user_id}")
-                        print(f"Cache journeys:user:{user_id} is deleted")
-                    else:
-                        print(f"There is no cache journeys:user:{user_id} to be deleted")
                 except Exception as e:
                     print(f"Failed to delete cache journeys:user:{user_id}: {e}")
 
@@ -260,7 +253,8 @@ async def update_journey(body, user_id, journey_id, rds=None):
         return journey
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in update_journey: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def delete_journey_by_id(user_id, journey_id, rds=None):
@@ -271,9 +265,6 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
                     cached_journeys = await rds.get(f"journeys:user:{user_id}")
                     if cached_journeys:
                         await rds.delete(f"journeys:user:{user_id}")
-                        print(f"Cache journeys:user:{user_id} is deleted")
-                    else:
-                        print(f"There is no cache journeys:user:{user_id} to be deleted")
                 except Exception as e:
                     print(f"Failed to delete cache journeys:user:{user_id}: {e}")
             
@@ -318,7 +309,8 @@ async def delete_journey_by_id(user_id, journey_id, rds=None):
             
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in delete_journey_by_id: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_journey_by_id(user_id, journey_id):
@@ -363,7 +355,8 @@ async def get_journey_by_id(user_id, journey_id):
             return journey
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_journey_by_id: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def get_journey_stats(user_id):
@@ -381,5 +374,6 @@ async def get_journey_stats(user_id):
             return dict(stats)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_journey_stats: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

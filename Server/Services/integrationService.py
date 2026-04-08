@@ -20,7 +20,6 @@ async def generateLinkingToken(user_id, rds=None):
                                 is_used = $3
                                 """
             existing_token = await conn.fetchrow(existing_token_query, user_id, current_time, False)
-            print(f"existing token: {existing_token}")
 
             if existing_token:
                 return existing_token['token']
@@ -40,12 +39,12 @@ async def generateLinkingToken(user_id, rds=None):
             return token
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in generateLinkingToken: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def linkTelegramAccount(user_id, telegram_id, telegram_username, token, rds=None):
     try:
-        print("Inside linkTelegramAccount")
         async with get_db_connection() as conn:
             existingUser = await get_user_by_id(user_id, rds)
             if existingUser is None:
@@ -93,29 +92,23 @@ async def linkTelegramAccount(user_id, telegram_id, telegram_username, token, rd
             return dict(user)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in linkTelegramAccount: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def validateTokenAndGetUser(token: str, rds = None):
     try:
-        print("Reached validateTokenAndGetUser")
         async with get_db_connection() as conn:
-            print("Before query")
             token_query = "SELECT * FROM google_telegram_link WHERE token = $1"
             token_data = await conn.fetchrow(token_query, token)
-            print("After query")
-            print(token_data)
 
             if token_data is None:
-                print("Invalid token")
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid token.")
             
             if token_data['is_used']:
-                print("Already used")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Your token has already been used.")
 
             if token_data['expires_at'] < pendulum.now('UTC'):
-                print("Expired")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This token has expired.")
 
             user_id = token_data['user_id']
@@ -123,10 +116,9 @@ async def validateTokenAndGetUser(token: str, rds = None):
             user = await get_user_by_id(user_id, rds)
             return user
     except HTTPException:
-        print(Exception)
         raise
-    except Exception:
-        print(Exception)
+    except Exception as e:
+        print(f"Error in validateTokenAndGetUser: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def revoke_all_calendar_events(user_id, rds = None):
@@ -168,5 +160,6 @@ async def revoke_all_calendar_events(user_id, rds = None):
 
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in revoke_all_calendar_events: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

@@ -52,7 +52,8 @@ async def userVerification(body, rds=None):
                 raise
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in userVerification: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 def createJwtToken(user):
@@ -65,5 +66,6 @@ def createJwtToken(user):
                             algorithm="HS256"
                         )
         return jwt_token
-    except Exception:
+    except Exception as e:
+        print(f"Error in createJwtToken: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

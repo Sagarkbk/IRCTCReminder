@@ -15,7 +15,8 @@ async def getJourneys(user_id: int =  Depends(authMiddleware), rds: Redis = Depe
         return {"data": journeys}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in getJourneys: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.post("/add", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
@@ -25,7 +26,8 @@ async def addJourney(body: JourneyInput, user_id: int =  Depends(authMiddleware)
         return {"data": journey}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in addJourney: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @journeyRouter.put("/update", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
@@ -35,7 +37,8 @@ async def updateJourney(body: JourneyInput, journey_id: int, user_id: int =  Dep
         return {"data": journey}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in updateJourney: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 @journeyRouter.delete("/delete", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
@@ -45,7 +48,8 @@ async def deleteJourney(journey_id: int, user_id: int =  Depends(authMiddleware)
         return {"data": [], "message": message}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in deleteJourney: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 @journeyRouter.get("/journeyStats", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
@@ -55,5 +59,6 @@ async def journeyStats(user_id: int = Depends(authMiddleware)):
         return {"data" : stats}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in journeyStats: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

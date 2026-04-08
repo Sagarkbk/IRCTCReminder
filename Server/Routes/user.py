@@ -15,7 +15,8 @@ async def getProfile(user_id: int = Depends(authMiddleware), rds: Redis = Depend
         return {"data" : user}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in getProfile: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 @userRouter.put("/preferences", status_code = status.HTTP_200_OK, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
@@ -25,5 +26,6 @@ async def updateProfile(body: UserPreferencesInput, user_id: int = Depends(authM
         return {"data" : user}
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in updateProfile: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

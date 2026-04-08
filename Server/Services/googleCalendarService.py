@@ -25,7 +25,8 @@ async def get_calendar_service(refresh_token: str):
         return service
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_calendar_service: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def create_calendar_event(refresh_token: str, details: CalendarEvent):
@@ -49,7 +50,7 @@ async def create_calendar_event(refresh_token: str, details: CalendarEvent):
     except HTTPException:
         raise
     except Exception as e:
-        print(e)
+        print(f"Error in create_calendar_event: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def update_calendar_event(refresh_token: str, eventId: str, details: CalendarEvent):
@@ -72,7 +73,8 @@ async def update_calendar_event(refresh_token: str, eventId: str, details: Calen
         return True
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in update_calendar_event: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def delete_calendar_event(refresh_token:str, eventId: str):
@@ -82,5 +84,6 @@ async def delete_calendar_event(refresh_token:str, eventId: str):
         return True
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in delete_calendar_event: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

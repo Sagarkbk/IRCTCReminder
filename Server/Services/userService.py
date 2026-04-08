@@ -31,7 +31,8 @@ async def create_user(userInfo, google_refresh_token, rds=None):
             return dict(result)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in create_user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_user_by_id(user_id, rds=None):
@@ -41,7 +42,6 @@ async def get_user_by_id(user_id, rds=None):
                 cache_key = f"user:{user_id}"
                 cached_user = await rds.get(cache_key)
                 if cached_user:
-                    print(f"user:{user_id} cache exists")
                     return json.loads(cached_user)
             except Exception as e:
                 print(f"Redis error: {e}")
@@ -64,7 +64,8 @@ async def get_user_by_id(user_id, rds=None):
             return dict(existingUser)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_user_by_id: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def get_user_by_google_id(google_id):
@@ -80,7 +81,8 @@ async def get_user_by_google_id(google_id):
             return dict(existingUser)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_user_by_google_id: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 async def update_user(userInfo, user_id, google_refresh_token, rds=None):
@@ -100,16 +102,10 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
                     if cached_user_str:
                         cached_user = json.loads(cached_user_str)
                         await rds.delete(f"user:{user_id}")
-                        print(f"Deleted cache user:{user_id}")
                         if cached_user and cached_user.get('telegram_id'):
                             cached_telegram = await rds.get(f"user_telegram:{cached_user.get('telegram_id')}")
                             if cached_telegram:
                                 await rds.delete(f"user_telegram:{cached_user.get('telegram_id')}")
-                                print(f"Deleted cache user_telegram:{cached_user.get('telegram_id')}")
-                            else:
-                                print(f"There is no cache user_telegram:{cached_user.get('telegram_id')} to be deleted")
-                    else:
-                        print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
                     print(f"Failed to delete cache user:{user_id}: {e}")
 
@@ -132,7 +128,8 @@ async def update_user(userInfo, user_id, google_refresh_token, rds=None):
             return dict(result)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in update_user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def update_user_settings(user_id, body, rds = None):
@@ -146,8 +143,6 @@ async def update_user_settings(user_id, body, rds = None):
                             cached_telegram = await rds.get(f"user_telegram:{user['telegram_id']}")
                             if cached_telegram:
                                 await rds.delete(f"user_telegram:{user['telegram_id']}")
-                    else:
-                        print(f"There is no cache user:{user_id} to be deleted")
                 except Exception as e:
                     print(f"Failed to delete cache user:{user_id}: {e}")
         
@@ -195,7 +190,8 @@ async def update_user_settings(user_id, body, rds = None):
         return dict(updated_user)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in update_user_settings: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
     
 async def get_user_by_telegram_id(telegram_id, rds=None):
@@ -205,7 +201,6 @@ async def get_user_by_telegram_id(telegram_id, rds=None):
                 cache_key = f"user_telegram:{telegram_id}"
                 cached_user = await rds.get(cache_key)
                 if cached_user:
-                    print(f"user_telegram:{telegram_id} cache exists")
                     return json.loads(cached_user)
             except Exception as e:
                 print(f"Redis error: {e}")
@@ -228,5 +223,6 @@ async def get_user_by_telegram_id(telegram_id, rds=None):
             return dict(existingUser)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error in get_user_by_telegram_id: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")

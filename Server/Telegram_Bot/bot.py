@@ -10,7 +10,6 @@ from Services.integrationService import validateTokenAndGetUser, linkTelegramAcc
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        print("Reached help")
         message = """*Welcome! Here are the available commands:*
 
 `/start   ` - Enable reminders.
@@ -26,7 +25,6 @@ To link your account, please click the "Link Telegram" button on our website. Th
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        print("Reached start")
         options = [
             [InlineKeyboardButton("YES", callback_data="enable")],
             [InlineKeyboardButton("NO", callback_data="do_not_enable")],
@@ -40,7 +38,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        print("Reached stop")
         options = [
             [InlineKeyboardButton("YES", callback_data="disable")],
             [InlineKeyboardButton("NO", callback_data="do_not_disable")],
@@ -54,7 +51,6 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        print("Reached link")
         if not context.args:
             await update.message.reply_text("To link your account, please use the link provided on our website.")
             return
@@ -96,7 +92,6 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def journeys(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        print("Reached journeys")
         telegram_id = update.message.from_user.id
         rds = context.bot_data.get('rds')
         user = await get_user_by_telegram_id(telegram_id, rds)
