@@ -16,7 +16,7 @@ export function PublicNavbar() {
               ?.scrollIntoView({ behavior: "smooth" });
           }}
         >
-          IRCTC Reminder
+          Rail Reminders
         </a>
         <div className="hidden md:flex justify-center items-center gap-x-4 sm:gap-x-6">
           <a

@@ -10,7 +10,7 @@ export function Hero() {
     >
       <div className="max-w-3xl">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-teal-500">
-          Never Miss Your IRCTC Booking Window Again
+          Never Miss Your Train Booking Window Again
         </h1>
 
         <p className="mt-6 max-w-2xl mx-auto text-xl text-slate-300">

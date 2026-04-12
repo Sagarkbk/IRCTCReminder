@@ -7,6 +7,8 @@ import { Profile } from "./pages/Profile";
 import { useAppSelector } from "./store/hooks";
 import { useEffect } from "react";
 import { useUserProfile } from "./hooks/profile/useUserProfile";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import { TermsOfService } from "./pages/TermsOfService";
 
 const AppRoutes = () => {
   useUserProfile();
@@ -31,6 +33,9 @@ const AppRoutes = () => {
         </div>
       )}
       <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+
         {isAuthenticated ? (
           <>
             <Route path="/" element={<Home />} />

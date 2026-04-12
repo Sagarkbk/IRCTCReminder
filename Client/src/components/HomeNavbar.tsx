@@ -38,7 +38,7 @@ export function HomeNavbar() {
     <nav className="bg-slate-800 p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-white text-xl font-bold cursor-pointer">
-          IRCTC Reminder
+          Rail Reminders
         </Link>
         <div className="relative" ref={dropdownRef}>
           {" "}

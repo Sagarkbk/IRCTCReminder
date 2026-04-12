@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function PublicFooter() {
   return (
     <footer className="bg-slate-900 border-t border-slate-800">
@@ -37,6 +39,18 @@ export function PublicFooter() {
             >
               How It Works
             </a>
+            <Link
+              to="/privacy"
+              className="text-slate-400 hover:text-blue-400 cursor-pointer transition-colors duration-300"
+            >
+              Privacy
+            </Link>
+            <Link
+              to="/terms"
+              className="text-slate-400 hover:text-blue-400 cursor-pointer transition-colors duration-300"
+            >
+              Terms
+            </Link>
           </nav>
         </div>
       </div>

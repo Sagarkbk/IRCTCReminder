@@ -79,7 +79,7 @@ export function AccountIntegrations({ user }: { user: User }) {
             <>
               <p className="mb-4">
                 Click the button below to generate a unique token. You will then
-                send this token to the IRCTC Reminder Bot on Telegram to link
+                send this token to the Rail Reminders Bot on Telegram to link
                 your account.
               </p>
               <div className="flex justify-end">

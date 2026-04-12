@@ -10,7 +10,7 @@ export function Demo() {
             Watch Demo
           </h2>
           <p className="mt-4 text-lg text-slate-300">
-            See a step-by-step guide on how to use IRCTC Reminder to never miss
+            See a step-by-step guide on how to use Rail Reminders to never miss
             a booking.
           </p>
         </div>
